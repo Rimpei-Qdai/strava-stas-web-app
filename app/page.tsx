@@ -61,11 +61,25 @@ function HomeContent() {
   const athleteName = searchParams.get('athlete');
   const error = searchParams.get('error');
   const fetching = searchParams.get('fetching');
+  const [currentFetchingKey, setCurrentFetchingKey] = useState<string | null>(null);
   
   useEffect(() => {
     fetchTokens();
     fetchStats();
   }, []);
+  
+  // URLパラメータから取得中のアスリート情報を抽出
+  useEffect(() => {
+    if (success && fetching) {
+      // 最新のトークンを取得してキーを特定
+      fetchTokens().then(() => {
+        if (tokens.length > 0) {
+          const latestToken = tokens[0];
+          setCurrentFetchingKey(`${latestToken.client_id}:${latestToken.athlete_id}`);
+        }
+      });
+    }
+  }, [success, fetching]);
   
   // Poll fetch statuses every 3 seconds
   useEffect(() => {
@@ -85,6 +99,12 @@ function HomeContent() {
             
             // 統計を更新
             await fetchStats();
+            
+            // URLパラメータをクリア（モーダルを閉じる）
+            if (key === currentFetchingKey) {
+              window.history.replaceState({}, '', window.location.pathname);
+              setCurrentFetchingKey(null);
+            }
             
             // 3秒後にステータスをクリア
             setTimeout(async () => {
@@ -109,7 +129,7 @@ function HomeContent() {
     }, 3000);
     
     return () => clearInterval(interval);
-  }, [completedStatuses]);
+  }, [completedStatuses, currentFetchingKey]);
   
   const fetchTokens = async () => {
     try {
@@ -545,16 +565,38 @@ function HomeContent() {
             <p className="text-lg mb-2">
               {decodeURIComponent(athleteName)} さんの登録が完了しました
             </p>
-            {fetching && (
-              <div className="bg-green-50 p-4 rounded mt-3 flex items-center gap-3">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-700"></div>
-                <div>
-                  <p className="font-semibold">📊 データを取得中...</p>
-                  <p className="text-sm">
-                    バックグラウンドで2025年のアクティビティデータを取得しています。
-                    完了まで数分かかる場合があります。このページを閉じても大丈夫です。
-                  </p>
+            {fetching && currentFetchingKey && (
+              <div className="bg-green-50 p-4 rounded mt-3">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-700"></div>
+                  <div className="flex-1">
+                    <p className="font-semibold">📊 データを取得中...</p>
+                    <p className="text-sm">
+                      バックグラウンドで2025年のアクティビティデータを取得しています。
+                    </p>
+                  </div>
                 </div>
+                {fetchStatuses[currentFetchingKey]?.progress && (
+                  <div className="mt-3">
+                    <div className="flex justify-between text-xs text-green-700 mb-1">
+                      <span>進捗状況</span>
+                      <span>
+                        {fetchStatuses[currentFetchingKey].progress.current} / {fetchStatuses[currentFetchingKey].progress.total} アクティビティ
+                      </span>
+                    </div>
+                    <div className="w-full bg-green-200 rounded-full h-2.5">
+                      <div
+                        className="bg-green-600 h-2.5 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${(fetchStatuses[currentFetchingKey].progress.current / fetchStatuses[currentFetchingKey].progress.total) * 100}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+                <p className="text-xs text-green-700 mt-2">
+                  完了まで数分かかる場合があります。このページを閉じても大丈夫です。
+                </p>
               </div>
             )}
             <p className="text-sm mt-2">
