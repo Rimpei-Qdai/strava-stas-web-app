@@ -208,10 +208,10 @@ function HomeContent() {
         {/* ヘッダー */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-3 text-center">
-            🚴 Strava データ取得ツール
+            🚴 Strava データ取得
           </h1>
           <p className="text-gray-600 text-center mb-6 text-lg">
-            Stravaのアクティビティデータを取得するための認証ツール
+            下記の設定ガイドを読んで、データ取得をお願いします🙇
           </p>
           
           {/* ステータスバッジ */}
@@ -219,11 +219,6 @@ function HomeContent() {
             <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
               👥 登録ユーザー: {tokens.length}人
             </div>
-            {tokens.some(t => Date.now() / 1000 >= t.expires_at) && (
-              <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-semibold">
-                ⚠️ 期限切れあり
-              </div>
-            )}
           </div>
 
           {/* メインボタンエリア */}
@@ -232,7 +227,7 @@ function HomeContent() {
               onClick={() => setShowSetupGuide(!showSetupGuide)}
               className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200 inline-flex items-center gap-2"
             >
-              📖 初めての方へ - 設定ガイド
+              Strava設定ガイド
               <span className="text-sm">{showSetupGuide ? '▲' : '▼'}</span>
             </button>
             
@@ -240,16 +235,10 @@ function HomeContent() {
               onClick={() => setShowAuthForm(!showAuthForm)}
               className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-200 inline-flex items-center gap-2"
             >
-              🔐 Stravaアカウントを登録する
+              Stravaアカウントを登録する
               <span className="text-sm">{showAuthForm ? '▲' : '▼'}</span>
             </button>
-            
-            <button
-              onClick={() => setShowGuide(!showGuide)}
-              className="text-blue-600 hover:text-blue-700 text-sm underline"
-            >
-              使い方がわからない方はこちら
-            </button>
+          
           </div>
         </div>
 
@@ -270,10 +259,9 @@ function HomeContent() {
             
             <div className="space-y-6">
               <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-                <p className="text-yellow-800 font-semibold mb-2">⚠️ 重要な注意事項</p>
                 <p className="text-yellow-700 text-sm">
-                  このツールを使用するには、あなた自身のStrava APIアプリケーションを作成する必要があります。
-                  下記の「設定ガイド」を参照して、まずStrava APIアプリを作成してください。
+                  先ほどのページに表示してある、Client IDとClient Secretの両方を入力してください。
+                  この情報は、どこにも保存されません。データが取得時に一時的に利用するだけなので、安心してください。 by 畑
                 </p>
               </div>
               
@@ -362,11 +350,11 @@ function HomeContent() {
                     <li>「Create an App」ボタンをクリック</li>
                     <li>以下の情報を入力：
                       <ul className="list-disc list-inside ml-6 mt-2 space-y-1">
-                        <li><strong>Application Name:</strong> 任意の名前（例: My Strava Data Tool）</li>
+                        <li><strong>Application Name:</strong> 任意の名前（例: My Strava Data Tool）<br /> ※テキトーで大丈夫です。</li>
                         <li><strong>Category:</strong> Data Importer を選択</li>
                         <li><strong>Club:</strong> （空欄でOK）</li>
-                        <li><strong>Website:</strong> http://localhost:3000</li>
-                        <li><strong>Authorization Callback Domain:</strong> <code className="bg-gray-100 px-2 py-1 rounded">localhost</code></li>
+                        <li><strong>Website:</strong> http://localhost:3000 <br /> ※"test"とかテキトー文字でも問題ないです。 </li>
+                        <li><strong>Authorization Callback Domain:</strong> <code className="bg-gray-100 px-2 py-1 rounded">localhost <br /> ※ここもテキトーで大丈夫です。</code></li>
                       </ul>
                     </li>
                     <li>利用規約に同意して「Create」ボタンをクリック</li>
@@ -383,14 +371,8 @@ function HomeContent() {
                   <ul className="list-disc list-inside space-y-1 text-gray-700 mb-3">
                     <li><strong>Client ID:</strong> 数字6桁（例: 192607）</li>
                     <li><strong>Client Secret:</strong> 長い英数字の文字列</li>
+                    この二つの値をあとでコピペして使うので、ページは開いたままにしておいてください。
                   </ul>
-                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <p className="text-green-800 font-semibold mb-2">✅ このアプリでは既に設定済みです</p>
-                    <p className="text-green-700 text-sm">
-                      管理者がすでにこれらの情報を設定しているため、ユーザーは何も共有する必要はありません。
-                      次のステップに進んで、Stravaアカウントを登録するだけでOKです！
-                    </p>
-                  </div>
                 </div>
 
                 <div className="border-l-4 border-purple-500 pl-4">
@@ -652,65 +634,15 @@ function HomeContent() {
                             {token.athlete_name}
                           </h3>
                           <div className="space-y-1">
-                            <p className="text-sm text-gray-600 flex items-center gap-2">
-                              <span className="font-semibold">Athlete ID:</span> {token.athlete_id}
-                            </p>
-                            <p className="text-xs text-gray-500 flex items-center gap-2">
-                              <span className="font-semibold">Client ID:</span> {token.client_id}
-                            </p>
-                            {token.athlete_profile.city && token.athlete_profile.country && (
-                              <p className="text-sm text-gray-600 flex items-center gap-2">
-                                <span>📍</span>
-                                {token.athlete_profile.city}, {token.athlete_profile.country}
-                              </p>
-                            )}
-                            <p className="text-xs text-gray-500 flex items-center gap-2">
-                              <span>📅</span>
-                              登録日: {new Date(token.created_at).toLocaleDateString('ja-JP', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </p>
-                            <div className="mt-2">
-                              {isExpired ? (
-                                <div className="inline-flex items-center gap-2 bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-semibold">
-                                  <span>⚠️</span>
-                                  <span>有効期限切れ - 再登録が必要です</span>
-                                </div>
-                              ) : (
-                                <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
-                                  <span>✅</span>
-                                  <span>
-                                    有効期限: {expiresDate.toLocaleDateString('ja-JP', {
-                                      month: 'short',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}まで
-                                  </span>
-                                </div>
-                              )}
-                            </div>
                             
                             {/* 統計データ表示 */}
                             {userStats && !fetchStatus && (
                               <div className="mt-3 bg-blue-50 p-3 rounded-lg">
-                                <p className="text-xs font-semibold text-blue-800 mb-2">📊 2025年の統計データ</p>
                                 <div className="grid grid-cols-2 gap-2 text-xs text-blue-700">
                                   <div>
-                                    <span className="font-semibold">走行距離:</span> {(userStats.total_distance / 1000).toFixed(1)} km
+                                    <span className="font-semibold">年間走行距離:</span> {(userStats.total_distance / 1000).toFixed(1)} km
                                   </div>
                                   <div>
-                                    <span className="font-semibold">アクティビティ:</span> {userStats.total_activities}
-                                  </div>
-                                  <div>
-                                    <span className="font-semibold">コメント:</span> {userStats.total_comments_count}
-                                  </div>
-                                  <div>
-                                    <span className="font-semibold">KOM:</span> {userStats.kom_count}
                                   </div>
                                 </div>
                                 <p className="text-xs text-blue-600 mt-2">
@@ -792,35 +724,6 @@ function HomeContent() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        {isExpired && (
-                          <a
-                            href="/api/auth"
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full font-semibold transition-colors duration-200 text-center text-sm"
-                          >
-                            🔄 再登録
-                          </a>
-                        )}
-                        {!isExpired && (
-                          <button
-                            type="button"
-                            onClick={() => handleRefreshStats(token.client_id, token.athlete_id)}
-                            disabled={isRefreshing}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full font-semibold transition-colors duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="データを再取得します"
-                          >
-                            {isRefreshing ? '⏳ 取得中...' : '🔄 データ更新'}
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(token.client_id, token.athlete_id, token.athlete_name)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-full font-semibold transition-colors duration-200 text-sm"
-                          title="このユーザーの登録を削除します"
-                        >
-                          🗑️ 削除
-                        </button>
-                      </div>
                     </div>
                   </div>
                 );
@@ -828,64 +731,8 @@ function HomeContent() {
             </div>
           )}
           
-          {/* 簡易説明 */}
-          <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 p-6 rounded-xl">
-            <h3 className="font-bold text-blue-900 mb-3 text-lg flex items-center gap-2">
-              <span className="text-2xl">💡</span>
-              これは何のリストですか？
-            </h3>
-            <p className="text-blue-800 mb-3">
-              ここに表示されているのは、Stravaデータの取得を許可したユーザーの一覧です。
-            </p>
-            <div className="bg-white p-4 rounded-lg space-y-2 text-sm">
-              <div className="flex items-start gap-3">
-                <span className="text-green-600 text-lg">✅</span>
-                <div>
-                  <p className="font-semibold text-gray-800">緑色のバッジ:</p>
-                  <p className="text-gray-600">データ取得可能な状態です</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="text-red-600 text-lg">⚠️</span>
-                <div>
-                  <p className="font-semibold text-gray-800">赤色のバッジ:</p>
-                  <p className="text-gray-600">有効期限が切れています。「🔄 再登録」ボタンをクリックしてください</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="text-red-600 text-lg">🗑️</span>
-                <div>
-                  <p className="font-semibold text-gray-800">削除ボタン:</p>
-                  <p className="text-gray-600">このユーザーの登録を解除します。データ取得ができなくなります</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* フッター・サポート情報 */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mt-8">
-          <h3 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
-            <span className="text-2xl">🆘</span>
-            困ったときは
-          </h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="font-semibold text-gray-800 mb-2">❓ よくある質問</p>
-              <ul className="text-sm text-gray-700 space-y-1">
-                <li>• 上の「使い方がわからない方はこちら」をクリック</li>
-                <li>• 詳しい手順ガイドが表示されます</li>
-              </ul>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="font-semibold text-gray-800 mb-2">🔗 Strava設定</p>
-              <ul className="text-sm text-gray-700 space-y-1">
-                <li>• <a href="https://www.strava.com/settings/apps" target="_blank" className="text-blue-600 hover:underline">連携アプリの管理</a></li>
-                <li>• アクセス許可の確認・取り消しができます</li>
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
