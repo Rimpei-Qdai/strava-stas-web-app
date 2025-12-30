@@ -333,7 +333,7 @@ function HomeContent() {
           <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8 border-4 border-orange-400">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-gray-800">
-                🛠️ 初回セットアップガイド（管理者向け）
+                🛠️ セットアップガイド
               </h2>
               <button
                 onClick={() => setShowSetupGuide(false)}
@@ -344,11 +344,6 @@ function HomeContent() {
             </div>
             
             <div className="space-y-6">
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                <p className="text-yellow-800 font-semibold">
-                  ⚠️ このセクションは初回のみ必要な設定です。すでに設定済みの場合はスキップしてください。
-                </p>
-              </div>
 
               <div className="space-y-6">
                 <div className="border-l-4 border-blue-500 pl-4">
@@ -378,6 +373,7 @@ function HomeContent() {
                       </ul>
                     </li>
                     <li>利用規約に同意して「Create」ボタンをクリック</li>
+                    <li>なぜか、アイコン画像の設定が求められるので、適当な画像を設定してください。マジでなんでもいいです笑</li>
                   </ol>
                 </div>
 
@@ -565,42 +561,16 @@ function HomeContent() {
             <p className="text-lg mb-2">
               {decodeURIComponent(athleteName)} さんの登録が完了しました
             </p>
-            {fetching && currentFetchingKey && (
-              <div className="bg-green-50 p-4 rounded mt-3">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-700"></div>
-                  <div className="flex-1">
-                    <p className="font-semibold">📊 データを取得中...</p>
-                    <p className="text-sm">
-                      バックグラウンドで2025年のアクティビティデータを取得しています。
-                    </p>
-                  </div>
-                </div>
-                {fetchStatuses[currentFetchingKey]?.progress && (
-                  <div className="mt-3">
-                    <div className="flex justify-between text-xs text-green-700 mb-1">
-                      <span>進捗状況</span>
-                      <span>
-                        {fetchStatuses[currentFetchingKey].progress.current} / {fetchStatuses[currentFetchingKey].progress.total} アクティビティ
-                      </span>
-                    </div>
-                    <div className="w-full bg-green-200 rounded-full h-2.5">
-                      <div
-                        className="bg-green-600 h-2.5 rounded-full transition-all duration-300"
-                        style={{
-                          width: `${(fetchStatuses[currentFetchingKey].progress.current / fetchStatuses[currentFetchingKey].progress.total) * 100}%`,
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-                <p className="text-xs text-green-700 mt-2">
-                  完了まで数分かかる場合があります。このページを閉じても大丈夫です。
+                <p className="text-sm">
+                  2025年のアクティビティデータを取得しています。
                 </p>
-              </div>
-            )}
+              <p className="text-xs text-green-700 mt-2">
+                完了まで数分かかる場合があります。ページを閉じずに完了までお待ちください。
+                ご自身のアイコンの横に年間走行距離が表示されれば完了です！
+              </p>
             <p className="text-sm mt-2">
-              下の「認証済みユーザー」リストに追加されました。これでデータ取得の準備が整いました！
+              下の「認証済みユーザー」リストに追加されました。
+              データ取得の進捗を下記で確認できます！
             </p>
           </div>
         )}
