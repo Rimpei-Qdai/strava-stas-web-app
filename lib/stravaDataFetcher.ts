@@ -36,6 +36,14 @@ interface SegmentEffort {
   activity_id: number;
 }
 
+interface ActivityTypeSummary {
+  type: string;
+  count: number;
+  total_distance: number;
+  total_moving_time: number;
+  total_elevation_gain: number;
+}
+
 interface UserStats {
   athlete_id: number;
   athlete_name: string;
@@ -43,6 +51,7 @@ interface UserStats {
   total_distance: number;
   total_activities: number;
   activities: Activity[];
+  activities_by_type: ActivityTypeSummary[];
   comments: Comment[];
   total_comments_count: number;
   segments_passed: SegmentEffort[];
@@ -87,6 +96,7 @@ export async function fetchStravaData(
     total_distance: 0,
     total_activities: 0,
     activities: [],
+    activities_by_type: [],
     comments: [],
     total_comments_count: 0,
     segments_passed: [],
@@ -262,11 +272,37 @@ export async function fetchStravaData(
     .sort((a, b) => b.pass_count - a.pass_count)
     .slice(0, 10);
 
+  // アクティビティタイプ別の統計を計算
+  const typeStats: Record<string, ActivityTypeSummary> = {};
+
+  for (const activity of stats.activities) {
+    const type = activity.type || 'Unknown';
+    if (!typeStats[type]) {
+      typeStats[type] = {
+        type: type,
+        count: 0,
+        total_distance: 0,
+        total_moving_time: 0,
+        total_elevation_gain: 0,
+      };
+    }
+    typeStats[type].count++;
+    typeStats[type].total_distance += activity.distance || 0;
+    typeStats[type].total_moving_time += activity.moving_time || 0;
+    typeStats[type].total_elevation_gain += activity.total_elevation_gain || 0;
+  }
+
+  stats.activities_by_type = Object.values(typeStats).sort((a, b) => b.count - a.count);
+
   console.log(`✅ データ取得完了: ${token.athlete_name}`);
   console.log(`   距離: ${(stats.total_distance / 1000).toFixed(2)} km`);
   console.log(`   アクティビティ: ${stats.total_activities}`);
   console.log(`   コメント: ${stats.total_comments_count}`);
   console.log(`   KOM: ${stats.kom_count}`);
+  console.log(`   アクティビティタイプ別:`);
+  stats.activities_by_type.forEach(type => {
+    console.log(`      ${type.type}: ${type.count}回 (${(type.total_distance / 1000).toFixed(1)}km)`);
+  });
 
   return stats;
 }

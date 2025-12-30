@@ -649,17 +649,55 @@ function HomeContent() {
                             
                             {/* 統計データ表示 */}
                             {userStats && !fetchStatus && (
-                              <div className="mt-3 bg-blue-50 p-3 rounded-lg">
-                                <div className="grid grid-cols-2 gap-2 text-xs text-blue-700">
-                                  <div>
-                                    <span className="font-semibold">年間走行距離:</span> {(userStats.total_distance / 1000).toFixed(1)} km
+                              <div className="mt-3 space-y-3">
+                                {/* 全体サマリー */}
+                                <div className="bg-blue-50 p-3 rounded-lg">
+                                  <p className="text-xs font-semibold text-blue-800 mb-2">📊 2025年の統計データ</p>
+                                  <div className="grid grid-cols-2 gap-2 text-xs text-blue-700">
+                                    <div>
+                                      <span className="font-semibold">ライド走行距離:</span> {(() => {
+                                        const rideData = userStats.activities_by_type?.find((t: any) => t.type === 'Ride');
+                                        return rideData ? (rideData.total_distance / 1000).toFixed(1) : '0.0';
+                                      })()} km
+                                    </div>
+                                    <div>
+                                      <span className="font-semibold">アクティビティ:</span> {userStats.total_activities}回
+                                    </div>
+                                    <div>
+                                      <span className="font-semibold">コメント:</span> {userStats.total_comments_count}
+                                    </div>
+                                    <div>
+                                      <span className="font-semibold">KOM:</span> {userStats.kom_count}
+                                    </div>
                                   </div>
-                                  <div>
-                                  </div>
+                                  <p className="text-xs text-blue-600 mt-2">
+                                    最終更新: {new Date(userStats.last_updated).toLocaleString('ja-JP')}
+                                  </p>
                                 </div>
-                                <p className="text-xs text-blue-600 mt-2">
-                                  最終更新: {new Date(userStats.last_updated).toLocaleString('ja-JP')}
-                                </p>
+
+                                {/* アクティビティタイプ別の統計（ライド以外） */}
+                                {userStats.activities_by_type && userStats.activities_by_type.length > 0 && (
+                                  <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                    <p className="text-xs font-semibold text-purple-800 mb-2">🏃 その他のアクティビティ</p>
+                                    <div className="space-y-2">
+                                      {userStats.activities_by_type
+                                        .filter((typeData: any) => typeData.type !== 'Ride')
+                                        .map((typeData: any) => (
+                                        <div key={typeData.type} className="bg-white p-2 rounded border border-purple-100">
+                                          <div className="flex items-center justify-between mb-1">
+                                            <span className="text-xs font-semibold text-purple-900">{typeData.type}</span>
+                                            <span className="text-xs text-purple-600">{typeData.count}回</span>
+                                          </div>
+                                          <div className="grid grid-cols-2 gap-1 text-xs text-purple-700">
+                                            <div>距離: {(typeData.total_distance / 1000).toFixed(1)} km</div>
+                                            <div>時間: {Math.floor(typeData.total_moving_time / 3600)}h {Math.floor((typeData.total_moving_time % 3600) / 60)}m</div>
+                                            <div className="col-span-2">獲得標高: {typeData.total_elevation_gain.toFixed(0)} m</div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                             
