@@ -155,23 +155,38 @@ export async function deleteStatsFromDB(clientId: string, athleteId: number) {
 
 // データ取得状況を保存
 export async function saveFetchStatusToDB(clientId: string, athleteId: number, status: any) {
-  const { error } = await supabase
-    .from('fetch_status')
-    .upsert({
+  try {
+    // 既存のレコードを確認
+    const existing = await getFetchStatusFromDB(clientId, athleteId);
+    
+    const dataToSave: any = {
       client_id: clientId,
       athlete_id: athleteId,
       status: status.status,
-      started_at: status.started_at || new Date().toISOString(),
-      completed_at: status.completed_at,
-      progress: status.progress,
-      error: status.error,
-    }, {
-      onConflict: 'client_id,athlete_id'
-    });
+      // started_atは既存のものを保持、なければ新規作成
+      started_at: existing?.started_at || status.started_at || new Date().toISOString(),
+      completed_at: status.completed_at || null,
+      error: status.error || null,
+    };
+    
+    // progressが存在する場合のみ追加（JSONB型として保存）
+    if (status.progress) {
+      dataToSave.progress = status.progress;
+    }
+    
+    const { error } = await supabase
+      .from('fetch_status')
+      .upsert(dataToSave, {
+        onConflict: 'client_id,athlete_id'
+      });
 
-  if (error) {
-    console.error('Error saving fetch status:', error);
-    throw error;
+    if (error) {
+      console.error('Error saving fetch status:', error);
+      throw error;
+    }
+  } catch (err) {
+    console.error('Exception in saveFetchStatusToDB:', err);
+    // エラーをログに残すが、処理は続行させる
   }
 }
 

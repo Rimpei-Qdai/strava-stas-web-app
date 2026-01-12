@@ -150,102 +150,136 @@ export async function fetchStravaData(
   console.log(`✅ 合計 ${allActivities.length} アクティビティを取得`);
   stats.total_activities = allActivities.length;
 
-  // 各アクティビティの詳細を取得
-  console.log('📝 各アクティビティの詳細を取得中...');
+  // 各アクティビティの基本情報を一覧データから取得（詳細APIは不要）
+  console.log('📝 アクティビティデータを処理中...');
 
   for (let i = 0; i < allActivities.length; i++) {
     const activity = allActivities[i];
-    const activityId = activity.id;
-
-    if (i % 10 === 0 || i === allActivities.length - 1) {
-      console.log(`   進捗: ${i + 1}/${allActivities.length}`);
-      // 進捗を報告
-      if (onProgress) {
-        onProgress(i + 1, allActivities.length);
-      }
-    }
 
     // 距離を加算
     stats.total_distance += activity.distance || 0;
 
-    // アクティビティの詳細情報を取得
-    try {
-      const detailUrl = `https://www.strava.com/api/v3/activities/${activityId}`;
-      const detailResponse = await fetch(detailUrl, { headers });
+    // アクティビティ情報を保存（一覧APIに含まれるデータを活用）
+    stats.activities.push({
+      id: activity.id,
+      name: activity.name,
+      distance: activity.distance,
+      moving_time: activity.moving_time,
+      elapsed_time: activity.elapsed_time,
+      total_elevation_gain: activity.total_elevation_gain,
+      type: activity.type,
+      start_date: activity.start_date,
+      start_date_local: activity.start_date_local,
+      average_speed: activity.average_speed,
+      max_speed: activity.max_speed,
+      average_cadence: activity.average_cadence,
+      average_temp: activity.average_temp,
+      average_heartrate: activity.average_heartrate,
+      max_heartrate: activity.max_heartrate,
+      kudos_count: activity.kudos_count || 0,
+      comment_count: activity.comment_count || 0,
+      achievement_count: activity.achievement_count || 0,
+    });
 
-      if (detailResponse.ok) {
-        const detail = await detailResponse.json();
+    if (i % 50 === 0 || i === allActivities.length - 1) {
+      console.log(`   基本データ処理: ${i + 1}/${allActivities.length}`);
+      if (onProgress) {
+        // 進捗: 0-30%の範囲で報告
+        const progressPercentage = (i + 1) / allActivities.length;
+        const progressCount = Math.floor(progressPercentage * 30);
+        onProgress(progressCount, 100);
+      }
+    }
+  }
 
-        // アクティビティ情報を保存
-        stats.activities.push({
-          id: activity.id,
-          name: activity.name,
-          distance: activity.distance,
-          moving_time: activity.moving_time,
-          elapsed_time: activity.elapsed_time,
-          total_elevation_gain: activity.total_elevation_gain,
-          type: activity.type,
-          start_date: activity.start_date,
-          start_date_local: activity.start_date_local,
-          average_speed: activity.average_speed,
-          max_speed: activity.max_speed,
-          average_cadence: activity.average_cadence,
-          average_temp: activity.average_temp,
-          average_heartrate: activity.average_heartrate,
-          max_heartrate: activity.max_heartrate,
-          kudos_count: detail.kudos_count || 0,
-          comment_count: detail.comment_count || 0,
-          achievement_count: detail.achievement_count || 0,
-        });
+  // セグメント情報とコメントを並列バッチ処理で取得
+  console.log('🏔️ セグメントとコメントをバッチ取得中...');
+  const batchSize = 10; // 10件ずつ並列処理
+  const activitiesWithDetails = allActivities.filter(a => a.achievement_count > 0 || a.comment_count > 0);
+  
+  console.log(`   詳細取得が必要なアクティビティ: ${activitiesWithDetails.length}/${allActivities.length}`);
 
-        // セグメントエフォートを取得
-        const segmentEfforts = detail.segment_efforts || [];
-        for (const effort of segmentEfforts) {
-          // KOMのチェック
-          if (effort.kom_rank === 1) {
-            stats.kom_count++;
-          }
+  for (let i = 0; i < activitiesWithDetails.length; i += batchSize) {
+    const batch = activitiesWithDetails.slice(i, Math.min(i + batchSize, activitiesWithDetails.length));
+    
+    // バッチ内のリクエストを並列実行
+    const batchPromises = batch.map(async (activity) => {
+      const activityId = activity.id;
+      
+      try {
+        // セグメント情報が必要な場合のみ詳細APIを呼ぶ
+        if (activity.achievement_count > 0) {
+          const detailUrl = `https://www.strava.com/api/v3/activities/${activityId}`;
+          const detailResponse = await fetch(detailUrl, { headers });
 
-          // セグメント通過記録
-          const segmentId = effort.segment?.id;
-          const segmentName = effort.segment?.name || 'Unknown';
-          if (segmentId) {
-            stats.segments_passed.push({
-              segment_id: segmentId,
-              segment_name: segmentName,
-              activity_id: activityId,
-            });
+          if (detailResponse.ok) {
+            const detail = await detailResponse.json();
+
+            // セグメントエフォートを取得
+            const segmentEfforts = detail.segment_efforts || [];
+            for (const effort of segmentEfforts) {
+              // KOMのチェック
+              if (effort.kom_rank === 1) {
+                stats.kom_count++;
+              }
+
+              // セグメント通過記録
+              const segmentId = effort.segment?.id;
+              const segmentName = effort.segment?.name || 'Unknown';
+              if (segmentId) {
+                stats.segments_passed.push({
+                  segment_id: segmentId,
+                  segment_name: segmentName,
+                  activity_id: activityId,
+                });
+              }
+            }
           }
         }
 
-        // コメントを取得
-        const commentsUrl = `https://www.strava.com/api/v3/activities/${activityId}/comments`;
-        const commentsResponse = await fetch(commentsUrl, { headers });
+        // コメントがある場合のみ取得
+        if (activity.comment_count > 0) {
+          const commentsUrl = `https://www.strava.com/api/v3/activities/${activityId}/comments`;
+          const commentsResponse = await fetch(commentsUrl, { headers });
 
-        if (commentsResponse.ok) {
-          const comments = await commentsResponse.json();
+          if (commentsResponse.ok) {
+            const comments = await commentsResponse.json();
 
-          for (const comment of comments) {
-            const athlete = comment.athlete || {};
-            stats.comments.push({
-              activity_id: activityId,
-              activity_name: activity.name,
-              commenter_id: athlete.id,
-              commenter_name: `${athlete.firstname || ''} ${athlete.lastname || ''}`.trim(),
-              comment_text: comment.text,
-              created_at: comment.created_at,
-            });
-            stats.total_comments_count++;
+            for (const comment of comments) {
+              const athlete = comment.athlete || {};
+              stats.comments.push({
+                activity_id: activityId,
+                activity_name: activity.name,
+                commenter_id: athlete.id,
+                commenter_name: `${athlete.firstname || ''} ${athlete.lastname || ''}`.trim(),
+                comment_text: comment.text,
+                created_at: comment.created_at,
+              });
+              stats.total_comments_count++;
+            }
           }
         }
+      } catch (error) {
+        console.error(`アクティビティ ${activityId} の取得エラー:`, error);
       }
+    });
 
-      // レート制限対策: 少し待機
-      if (i % 50 === 0 && i > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    } catch (error) {
-      console.error(`アクティビティ ${activityId} の取得エラー:`, error);
+    // バッチ内の全リクエストを並列実行して完了を待つ
+    await Promise.all(batchPromises);
+
+    const processedCount = Math.min(i + batchSize, activitiesWithDetails.length);
+    console.log(`   詳細データ取得: ${processedCount}/${activitiesWithDetails.length}`);
+    
+    // 進捗を報告（30%〜100%の範囲）
+    const detailProgress = processedCount / activitiesWithDetails.length;
+    const progressCount = Math.floor(30 + detailProgress * 70);
+    if (onProgress) {
+      onProgress(progressCount, 100);
+    }
+
+    // レート制限対策: バッチ間で待機
+    if (i + batchSize < activitiesWithDetails.length) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
 

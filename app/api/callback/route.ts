@@ -87,26 +87,34 @@ export async function GET(request: NextRequest) {
 
 // バックグラウンドでデータを取得して保存
 async function fetchAndSaveData(token: StravaToken) {
+  const startedAt = new Date().toISOString();
+  
   try {
     console.log(`🚀 バックグラウンドデータ取得開始: ${token.athlete_name}`);
     
     // 取得開始状態を記録
     await saveFetchStatusToDB(token.client_id, token.athlete_id, {
       status: 'fetching',
-      started_at: new Date().toISOString(),
+      started_at: startedAt,
     });
     
-    // 2025年のデータを取得
+    // 2025年のデータを取得（タイムアウトなしでバックグラウンド実行）
     const startDate = new Date('2025-01-01');
     const endDate = new Date(); // 現在時刻を使用
     
     const stats = await fetchStravaData(token, startDate, endDate, async (current, total) => {
-      // 進捗を更新
-      await saveFetchStatusToDB(token.client_id, token.athlete_id, {
-        status: 'fetching',
-        started_at: new Date().toISOString(),
-        progress: { current, total },
-      });
+      // 進捗を更新（started_atは保持）
+      console.log(`📊 進捗更新: ${token.athlete_name} - ${current}/${total}`);
+      try {
+        await saveFetchStatusToDB(token.client_id, token.athlete_id, {
+          status: 'fetching',
+          started_at: startedAt,
+          progress: { current, total },
+        });
+        console.log(`✅ 進捗保存成功: ${current}/${total}`);
+      } catch (progressError) {
+        console.error('進捗更新エラー:', progressError);
+      }
     });
     
     // 統計データを保存
@@ -115,21 +123,25 @@ async function fetchAndSaveData(token: StravaToken) {
     // 完了状態を記録
     await saveFetchStatusToDB(token.client_id, token.athlete_id, {
       status: 'completed',
-      started_at: new Date().toISOString(),
+      started_at: startedAt,
       completed_at: new Date().toISOString(),
     });
     
     console.log(`✅ データ保存完了: ${token.athlete_name}`);
   } catch (error) {
-    console.error('データ取得・保存エラー:', error);
+    console.error('バックグラウンドデータ取得エラー:', error);
     
-    // エラー状態を記録
-    await saveFetchStatusToDB(token.client_id, token.athlete_id, {
-      status: 'error',
-      started_at: new Date().toISOString(),
-      completed_at: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    // エラー状態を記録（確実に実行）
+    try {
+      await saveFetchStatusToDB(token.client_id, token.athlete_id, {
+        status: 'error',
+        started_at: startedAt,
+        completed_at: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } catch (statusError) {
+      console.error('ステータス更新エラー:', statusError);
+    }
     
     throw error;
   }

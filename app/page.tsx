@@ -215,6 +215,35 @@ function HomeContent() {
       });
     }
   };
+
+  const handleResetFetchStatus = async (clientId: string, athleteId: number, athleteName: string) => {
+    if (!confirm(`${athleteName} のデータ取得状態をリセットしますか？\nこれにより、スタックした取得処理をクリアできます。`)) {
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/reset-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ client_id: clientId, athlete_id: athleteId }),
+      });
+      
+      if (response.ok) {
+        alert('取得状態をリセットしました。再度データ取得を試してください。');
+        // ステータスを再読み込み
+        const statusResponse = await fetch('/api/fetch-status');
+        const statusData = await statusResponse.json();
+        setFetchStatuses(statusData);
+      } else {
+        alert('リセットに失敗しました');
+      }
+    } catch (err) {
+      console.error('Failed to reset fetch status:', err);
+      alert('リセットに失敗しました');
+    }
+  };
   
   const getErrorMessage = (errorCode: string | null) => {
     switch (errorCode) {
@@ -715,12 +744,21 @@ function HomeContent() {
                             
                             {/* 取得中の表示 */}
                             {fetchStatus?.status === 'fetching' && (
-                              <div className="mt-3 bg-blue-50 p-3 rounded-lg">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
-                                  <p className="text-xs font-semibold text-blue-800">
-                                    📊 データを取得中...
-                                  </p>
+                              <div className="mt-3 bg-blue-50 p-3 rounded-lg border-2 border-blue-200">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
+                                    <p className="text-xs font-semibold text-blue-800">
+                                      📊 データを取得中...
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={() => handleResetFetchStatus(token.client_id, token.athlete_id, token.athlete_name)}
+                                    className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors"
+                                    title="スタックした場合にリセット"
+                                  >
+                                    リセット
+                                  </button>
                                 </div>
                                 {fetchStatus.progress && (
                                   <div className="space-y-1">
@@ -738,6 +776,9 @@ function HomeContent() {
                                 )}
                                 <p className="text-xs text-blue-600 mt-2">
                                   開始時刻: {new Date(fetchStatus.started_at).toLocaleString('ja-JP')}
+                                </p>
+                                <p className="text-xs text-blue-500 mt-1">
+                                  ※ 長時間変化がない場合は「リセット」ボタンを押してください
                                 </p>
                               </div>
                             )}
@@ -761,8 +802,16 @@ function HomeContent() {
                             
                             {/* エラー表示 */}
                             {fetchStatus?.status === 'error' && (
-                              <div className="mt-3 bg-red-50 p-3 rounded-lg">
-                                <p className="text-xs font-semibold text-red-800 mb-1">❌ データ取得エラー</p>
+                              <div className="mt-3 bg-red-50 p-3 rounded-lg border-2 border-red-200">
+                                <div className="flex items-center justify-between mb-1">
+                                  <p className="text-xs font-semibold text-red-800">❌ データ取得エラー</p>
+                                  <button
+                                    onClick={() => handleResetFetchStatus(token.client_id, token.athlete_id, token.athlete_name)}
+                                    className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded transition-colors"
+                                  >
+                                    リセットして再試行
+                                  </button>
+                                </div>
                                 <p className="text-xs text-red-700">{fetchStatus.error}</p>
                               </div>
                             )}
