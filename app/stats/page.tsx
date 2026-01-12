@@ -212,30 +212,30 @@ export default function StatsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-800 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-800 py-4 sm:py-8 px-3 sm:px-4">
       <div className="max-w-7xl mx-auto">
         {/* ヘッダー */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
             <div>
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              <h1 className="text-2xl sm:text-4xl font-bold text-gray-800 mb-1 sm:mb-2">
                 📊 統計ダッシュボード
               </h1>
-              <p className="text-gray-600">2025年のStravaアクティビティ統計比較</p>
+              <p className="text-gray-600 text-sm sm:text-base">2025年のStravaアクティビティ統計比較</p>
             </div>
             <Link
               href="/"
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition-all duration-200 text-sm sm:text-base text-center"
             >
               ← ホームに戻る
             </Link>
           </div>
 
           {/* タブナビゲーション */}
-          <div className="flex gap-2 border-b border-gray-200">
+          <div className="flex gap-1 sm:gap-2 border-b border-gray-200 overflow-x-auto">
             <button
               onClick={() => setSelectedTab('overview')}
-              className={`px-6 py-3 font-semibold transition-all ${
+              className={`px-3 sm:px-6 py-2 sm:py-3 font-semibold transition-all text-xs sm:text-base whitespace-nowrap ${
                 selectedTab === 'overview'
                   ? 'border-b-4 border-blue-500 text-blue-600'
                   : 'text-gray-600 hover:text-gray-800'
@@ -245,7 +245,7 @@ export default function StatsPage() {
             </button>
             <button
               onClick={() => setSelectedTab('activities')}
-              className={`px-6 py-3 font-semibold transition-all ${
+              className={`px-3 sm:px-6 py-2 sm:py-3 font-semibold transition-all text-xs sm:text-base whitespace-nowrap ${
                 selectedTab === 'activities'
                   ? 'border-b-4 border-green-500 text-green-600'
                   : 'text-gray-600 hover:text-gray-800'
@@ -255,7 +255,7 @@ export default function StatsPage() {
             </button>
             <button
               onClick={() => setSelectedTab('comments')}
-              className={`px-6 py-3 font-semibold transition-all ${
+              className={`px-3 sm:px-6 py-2 sm:py-3 font-semibold transition-all text-xs sm:text-base whitespace-nowrap ${
                 selectedTab === 'comments'
                   ? 'border-b-4 border-purple-500 text-purple-600'
                   : 'text-gray-600 hover:text-gray-800'
@@ -265,7 +265,7 @@ export default function StatsPage() {
             </button>
             <button
               onClick={() => setSelectedTab('segments')}
-              className={`px-6 py-3 font-semibold transition-all ${
+              className={`px-3 sm:px-6 py-2 sm:py-3 font-semibold transition-all text-xs sm:text-base whitespace-nowrap ${
                 selectedTab === 'segments'
                   ? 'border-b-4 border-orange-500 text-orange-600'
                   : 'text-gray-600 hover:text-gray-800'
@@ -279,18 +279,18 @@ export default function StatsPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-white mb-4"></div>
-            <p className="text-white text-lg">データを読み込み中...</p>
+            <p className="text-white text-base sm:text-lg">データを読み込み中...</p>
           </div>
         ) : stats.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-2xl p-12 text-center">
-            <div className="text-6xl mb-4">📊</div>
-            <p className="text-gray-800 text-xl font-bold mb-2">統計データがありません</p>
-            <p className="text-gray-600 mb-6">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-6 sm:p-12 text-center">
+            <div className="text-4xl sm:text-6xl mb-4">📊</div>
+            <p className="text-gray-800 text-lg sm:text-xl font-bold mb-2">統計データがありません</p>
+            <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
               先にホームページでStravaアカウントを登録してデータを取得してください
             </p>
             <Link
               href="/"
-              className="inline-block bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200"
+              className="inline-block bg-blue-500 hover:bg-blue-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-semibold transition-all duration-200 text-sm sm:text-base"
             >
               ホームに戻る
             </Link>
@@ -298,35 +298,35 @@ export default function StatsPage() {
         ) : (
           <>
             {/* 総合サマリー */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
-                <div className="text-3xl mb-2">🚴</div>
-                <div className="text-sm opacity-90 mb-1">総走行距離</div>
-                <div className="text-3xl font-bold">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white shadow-lg">
+                <div className="text-2xl sm:text-3xl mb-1 sm:mb-2">🚴</div>
+                <div className="text-xs sm:text-sm opacity-90 mb-1">総走行距離</div>
+                <div className="text-xl sm:text-3xl font-bold">
                   {(stats.reduce((sum, s) => sum + s.total_distance, 0) / 1000).toFixed(1)} km
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
-                <div className="text-3xl mb-2">📝</div>
-                <div className="text-sm opacity-90 mb-1">総アクティビティ数</div>
-                <div className="text-3xl font-bold">
+              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white shadow-lg">
+                <div className="text-2xl sm:text-3xl mb-1 sm:mb-2">📝</div>
+                <div className="text-xs sm:text-sm opacity-90 mb-1">総アクティビティ数</div>
+                <div className="text-xl sm:text-3xl font-bold">
                   {stats.reduce((sum, s) => sum + s.total_activities, 0)}
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
-                <div className="text-3xl mb-2">🏆</div>
-                <div className="text-sm opacity-90 mb-1">KOM総数</div>
-                <div className="text-3xl font-bold">
+              <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white shadow-lg">
+                <div className="text-2xl sm:text-3xl mb-1 sm:mb-2">🏆</div>
+                <div className="text-xs sm:text-sm opacity-90 mb-1">KOM総数</div>
+                <div className="text-xl sm:text-3xl font-bold">
                   {stats.reduce((sum, s) => sum + s.kom_count, 0)}
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
-                <div className="text-3xl mb-2">💬</div>
-                <div className="text-sm opacity-90 mb-1">コメント総数</div>
-                <div className="text-3xl font-bold">
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg sm:rounded-xl p-4 sm:p-6 text-white shadow-lg">
+                <div className="text-2xl sm:text-3xl mb-1 sm:mb-2">💬</div>
+                <div className="text-xs sm:text-sm opacity-90 mb-1">コメント総数</div>
+                <div className="text-xl sm:text-3xl font-bold">
                   {stats.reduce((sum, s) => sum + s.total_comments_count, 0)}
                 </div>
               </div>
@@ -334,27 +334,27 @@ export default function StatsPage() {
 
             {/* タブコンテンツ */}
             {selectedTab === 'overview' && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* 走行距離比較 */}
-                <div className="bg-white rounded-2xl shadow-2xl p-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">🚴 走行距離ランキング</h2>
-                  <div className="h-96">
+                <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8">
+                  <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">🚴 走行距離ランキング</h2>
+                  <div className="h-64 sm:h-96">
                     <Bar data={distanceChartData} options={barChartOptions} />
                   </div>
                 </div>
 
                 {/* アクティビティ数比較 */}
-                <div className="bg-white rounded-2xl shadow-2xl p-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">📝 アクティビティ数ランキング</h2>
-                  <div className="h-96">
+                <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8">
+                  <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">📝 アクティビティ数ランキング</h2>
+                  <div className="h-64 sm:h-96">
                     <Bar data={activitiesChartData} options={barChartOptions} />
                   </div>
                 </div>
 
                 {/* KOM & Local Legend比較 */}
-                <div className="bg-white rounded-2xl shadow-2xl p-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">🏆 KOM & Local Legend比較</h2>
-                  <div className="h-96">
+                <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8">
+                  <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">🏆 KOM & Local Legend比較</h2>
+                  <div className="h-64 sm:h-96">
                     <Bar data={komChartData} options={chartOptions} />
                   </div>
                 </div>
@@ -362,25 +362,25 @@ export default function StatsPage() {
             )}
 
             {selectedTab === 'activities' && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* アクティビティタイプ別比較 */}
-                <div className="bg-white rounded-2xl shadow-2xl p-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">🏃 アクティビティタイプ別走行距離</h2>
-                  <div className="h-96">
+                <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8">
+                  <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">🏃 アクティビティタイプ別走行距離</h2>
+                  <div className="h-64 sm:h-96">
                     <Bar data={activityTypeChartData} options={chartOptions} />
                   </div>
                 </div>
 
                 {/* ユーザー別詳細テーブル */}
                 {stats.map((stat) => (
-                  <div key={`${stat.client_id}-${stat.athlete_id}`} className="bg-white rounded-2xl shadow-2xl p-8">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">{stat.athlete_name} の詳細</h3>
+                  <div key={`${stat.client_id}-${stat.athlete_id}`} className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">{stat.athlete_name} の詳細</h3>
                     {stat.activities_by_type && stat.activities_by_type.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                         {stat.activities_by_type.map((type) => (
-                          <div key={type.type} className="bg-gray-50 p-4 rounded-lg border-2 border-gray-200">
-                            <div className="font-bold text-gray-800 mb-2">{type.type}</div>
-                            <div className="space-y-1 text-sm text-gray-700">
+                          <div key={type.type} className="bg-gray-50 p-3 sm:p-4 rounded-lg border-2 border-gray-200">
+                            <div className="font-bold text-gray-800 mb-2 text-sm sm:text-base">{type.type}</div>
+                            <div className="space-y-1 text-xs sm:text-sm text-gray-700">
                               <div>回数: {type.count}</div>
                               <div>距離: {(type.total_distance / 1000).toFixed(1)} km</div>
                               <div>
@@ -401,26 +401,26 @@ export default function StatsPage() {
             )}
 
             {selectedTab === 'comments' && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* コメント比較グラフ */}
-                <div className="bg-white rounded-2xl shadow-2xl p-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">💬 コメント送受信比較</h2>
-                  <div className="h-96">
+                <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8">
+                  <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">💬 コメント送受信比較</h2>
+                  <div className="h-64 sm:h-96">
                     <Bar data={commentsChartData} options={chartOptions} />
                   </div>
                 </div>
 
                 {/* コメント詳細テーブル */}
-                <div className="bg-white rounded-2xl shadow-2xl p-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">📋 コメント詳細</h2>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
+                <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8">
+                  <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">📋 コメント詳細</h2>
+                  <div className="overflow-x-auto -mx-4 sm:mx-0">
+                    <table className="w-full min-w-max">
                       <thead>
                         <tr className="bg-gray-100">
-                          <th className="px-4 py-3 text-left font-semibold text-gray-700">ユーザー</th>
-                          <th className="px-4 py-3 text-center font-semibold text-gray-700">受け取ったコメント</th>
-                          <th className="px-4 py-3 text-center font-semibold text-gray-700">したコメント</th>
-                          <th className="px-4 py-3 text-center font-semibold text-gray-700">差分</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-gray-700 text-xs sm:text-base">ユーザー</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-gray-700 text-xs sm:text-base">受取</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-gray-700 text-xs sm:text-base">送信</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-gray-700 text-xs sm:text-base">差分</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -430,10 +430,10 @@ export default function StatsPage() {
                           const diff = received - given;
                           return (
                             <tr key={`${stat.client_id}-${stat.athlete_id}`} className="border-b hover:bg-gray-50">
-                              <td className="px-4 py-3 font-semibold text-gray-800">{stat.athlete_name}</td>
-                              <td className="px-4 py-3 text-center text-green-600 font-bold">{received}</td>
-                              <td className="px-4 py-3 text-center text-blue-600 font-bold">{given}</td>
-                              <td className={`px-4 py-3 text-center font-bold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-800 text-xs sm:text-base">{stat.athlete_name}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-green-600 font-bold text-xs sm:text-base">{received}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-blue-600 font-bold text-xs sm:text-base">{given}</td>
+                              <td className={`px-2 sm:px-4 py-2 sm:py-3 text-center font-bold text-xs sm:text-base ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-600'}`}>
                                 {diff > 0 ? '+' : ''}{diff}
                               </td>
                             </tr>
@@ -447,46 +447,46 @@ export default function StatsPage() {
             )}
 
             {selectedTab === 'segments' && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {stats.map((stat) => (
-                  <div key={`${stat.client_id}-${stat.athlete_id}`} className="bg-white rounded-2xl shadow-2xl p-8">
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-2xl font-bold text-gray-800">{stat.athlete_name}</h2>
-                      <div className="flex gap-4">
-                        <div className="bg-orange-100 px-4 py-2 rounded-lg">
-                          <span className="text-sm text-orange-800 font-semibold">KOM: </span>
-                          <span className="text-xl font-bold text-orange-900">{stat.kom_count}</span>
+                  <div key={`${stat.client_id}-${stat.athlete_id}`} className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">{stat.athlete_name}</h2>
+                      <div className="flex gap-2 sm:gap-4">
+                        <div className="bg-orange-100 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg">
+                          <span className="text-xs sm:text-sm text-orange-800 font-semibold">KOM: </span>
+                          <span className="text-base sm:text-xl font-bold text-orange-900">{stat.kom_count}</span>
                         </div>
-                        <div className="bg-red-100 px-4 py-2 rounded-lg">
-                          <span className="text-sm text-red-800 font-semibold">Local Legend: </span>
-                          <span className="text-xl font-bold text-red-900">{stat.local_legend_count}</span>
+                        <div className="bg-red-100 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg">
+                          <span className="text-xs sm:text-sm text-red-800 font-semibold">Local Legend: </span>
+                          <span className="text-base sm:text-xl font-bold text-red-900">{stat.local_legend_count}</span>
                         </div>
                       </div>
                     </div>
 
                     {stat.most_passed_segments && stat.most_passed_segments.length > 0 ? (
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-4">🏔️ 最も通過したセグメント</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-3 sm:mb-4">🏔️ 最も通過したセグメント</h3>
                         <div className="space-y-2">
                           {stat.most_passed_segments.slice(0, 10).map((segment, index) => (
-                            <div key={segment.segment_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                              <div className="flex items-center gap-4">
-                                <div className="text-2xl font-bold text-gray-400">#{index + 1}</div>
-                                <div>
-                                  <div className="font-semibold text-gray-800">{segment.segment_name}</div>
-                                  <div className="text-sm text-gray-600">ID: {segment.segment_id}</div>
+                            <div key={segment.segment_id} className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                              <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                                <div className="text-lg sm:text-2xl font-bold text-gray-400 flex-shrink-0">#{index + 1}</div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-gray-800 text-sm sm:text-base truncate">{segment.segment_name}</div>
+                                  <div className="text-xs sm:text-sm text-gray-600">ID: {segment.segment_id}</div>
                                 </div>
                               </div>
-                              <div className="bg-blue-100 px-4 py-2 rounded-lg">
-                                <span className="text-xl font-bold text-blue-900">{segment.pass_count}</span>
-                                <span className="text-sm text-blue-700 ml-1">回</span>
+                              <div className="bg-blue-100 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg flex-shrink-0 ml-2">
+                                <span className="text-base sm:text-xl font-bold text-blue-900">{segment.pass_count}</span>
+                                <span className="text-xs sm:text-sm text-blue-700 ml-1">回</span>
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     ) : (
-                      <p className="text-gray-600">セグメントデータがありません</p>
+                      <p className="text-gray-600 text-sm sm:text-base">セグメントデータがありません</p>
                     )}
                   </div>
                 ))}

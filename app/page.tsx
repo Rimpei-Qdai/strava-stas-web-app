@@ -230,34 +230,34 @@ function HomeContent() {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-800 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-800 py-4 sm:py-8 px-3 sm:px-4">
       <div className="max-w-5xl mx-auto">
         {/* ヘッダー */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-3 text-center">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-800 mb-2 sm:mb-3 text-center">
             🚴 Strava データ取得
           </h1>
-          <p className="text-gray-600 text-center mb-6 text-lg">
+          <p className="text-gray-600 text-center mb-4 sm:mb-6 text-sm sm:text-lg">
             下記の設定ガイドを読んで、データ取得をお願いします🙇
           </p>
           
           {/* ステータスバッジ */}
-          <div className="flex justify-center gap-4 mb-6">
-            <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
+          <div className="flex justify-center gap-2 sm:gap-4 mb-4 sm:mb-6">
+            <div className="bg-blue-100 text-blue-800 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold">
               👥 登録ユーザー: {tokens.length}人
             </div>
           </div>          {/* メインボタンエリア */}
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-stretch sm:items-center gap-3 sm:gap-4">
             <a
               href="/stats"
-              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-200 inline-flex items-center gap-2"
+              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex items-center justify-center gap-2"
             >
               📊 統計ダッシュボードを見る
             </a>
 
             <button
               onClick={() => setShowSetupGuide(!showSetupGuide)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200 inline-flex items-center gap-2"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-200 flex items-center justify-center gap-2"
             >
               Strava設定ガイド
               <span className="text-sm">{showSetupGuide ? '▲' : '▼'}</span>
@@ -265,7 +265,7 @@ function HomeContent() {
             
             <button
               onClick={() => setShowAuthForm(!showAuthForm)}
-              className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-200 inline-flex items-center gap-2"
+              className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex items-center justify-center gap-2"
             >
               Stravaアカウントを登録する
               <span className="text-sm">{showAuthForm ? '▲' : '▼'}</span>
@@ -276,14 +276,14 @@ function HomeContent() {
 
         {/* 認証情報入力フォーム */}
         {showAuthForm && (
-          <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8 border-4 border-orange-400">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-gray-800">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8 mb-6 sm:mb-8 border-2 sm:border-4 border-orange-400">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h2 className="text-lg sm:text-2xl font-bold text-gray-800">
                 🔑 Strava API認証情報を入力
               </h2>
               <button
                 onClick={() => setShowAuthForm(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
+                className="text-gray-500 hover:text-gray-700 text-xl sm:text-2xl"
               >
                 ✖
               </button>
