@@ -79,10 +79,10 @@ export async function fetchStravaData(
   // デフォルトは2025年全体
   const afterTimestamp = startDate
     ? Math.floor(startDate.getTime() / 1000)
-    : Math.floor(new Date('2025-01-01').getTime() / 1000);
+    : Math.floor(new Date('2025-01-01T00:00:00Z').getTime() / 1000);
   const beforeTimestamp = endDate
     ? Math.floor(endDate.getTime() / 1000)
-    : Math.floor(Date.now() / 1000); // 現在時刻を使用
+    : Math.floor(new Date('2025-12-31T23:59:59Z').getTime() / 1000); // 2025年末まで
 
   console.log(
     `📊 ${token.athlete_name} のデータを取得中... (${new Date(afterTimestamp * 1000).toLocaleDateString()} - ${new Date(beforeTimestamp * 1000).toLocaleDateString()})`
@@ -108,7 +108,7 @@ export async function fetchStravaData(
 
   // アクティビティ一覧を取得（ページネーション対応）
   let page = 1;
-  const perPage = 10; // デバッグ用: 10件のみ取得
+  const perPage = 200; // ページあたり最大200件
   let allActivities: any[] = [];
 
   while (true) {
@@ -135,9 +135,6 @@ export async function fetchStravaData(
 
       allActivities = allActivities.concat(activities);
       console.log(`   ページ ${page}: ${activities.length} アクティビティ取得 (累計: ${allActivities.length})`);
-
-      // デバッグ用: 1ページのみ取得
-      break;
 
       if (activities.length < perPage) {
         break;
