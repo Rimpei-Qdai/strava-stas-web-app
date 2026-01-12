@@ -5,11 +5,10 @@ import { useSearchParams } from 'next/navigation';
 
 interface Token {
   client_id: string;
-  athlete_id: number;
-  athlete_name: string;
   created_at: string;
   expires_at: number;
   athlete_profile: {
+    id: number;
     firstname: string;
     lastname: string;
     profile: string;
@@ -22,8 +21,6 @@ interface Token {
 interface StatsSummary {
   filename: string;
   client_id: string;
-  athlete_id: number;
-  athlete_name: string;
   period: string;
   total_distance: number;
   total_activities: number;
@@ -39,21 +36,9 @@ interface StatsSummary {
   }>;
 }
 
-interface FetchStatus {
-  status: 'fetching' | 'completed' | 'error';
-  started_at: string;
-  completed_at?: string;
-  progress?: {
-    current: number;
-    total: number;
-  };
-  error?: string;
-}
-
 function HomeContent() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [stats, setStats] = useState<StatsSummary[]>([]);
-  const [fetchStatuses, setFetchStatuses] = useState<Record<string, FetchStatus>>({});
   const [loading, setLoading] = useState(true);
   const [showGuide, setShowGuide] = useState(false);
   const [showSetupGuide, setShowSetupGuide] = useState(false);
@@ -61,82 +46,16 @@ function HomeContent() {
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [refreshingStats, setRefreshingStats] = useState<Set<string>>(new Set());
-  const [completedStatuses, setCompletedStatuses] = useState<Set<string>>(new Set());
   const searchParams = useSearchParams();
   
   const success = searchParams.get('success');
   const athleteName = searchParams.get('athlete');
   const error = searchParams.get('error');
-  const fetching = searchParams.get('fetching');
-  const [currentFetchingKey, setCurrentFetchingKey] = useState<string | null>(null);
   
   useEffect(() => {
     fetchTokens();
     fetchStats();
   }, []);
-  
-  // URLパラメータから取得中のアスリート情報を抽出
-  useEffect(() => {
-    if (success && fetching) {
-      // 最新のトークンを取得してキーを特定
-      fetchTokens().then(() => {
-        if (tokens.length > 0) {
-          const latestToken = tokens[0];
-          setCurrentFetchingKey(`${latestToken.client_id}:${latestToken.athlete_id}`);
-        }
-      });
-    }
-  }, [success, fetching]);
-  
-  // Poll fetch statuses every 3 seconds
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch('/api/fetch-status');
-        const data = await response.json();
-        setFetchStatuses(data);
-        
-        // データ取得が完了したら統計を再読み込み
-        Object.entries(data).forEach(async ([key, status]) => {
-          const fetchStatus = status as FetchStatus;
-          
-          if (fetchStatus.status === 'completed' && !completedStatuses.has(key)) {
-            // 完了状態を記録
-            setCompletedStatuses(prev => new Set([...prev, key]));
-            
-            // 統計を更新
-            await fetchStats();
-            
-            // URLパラメータをクリア（モーダルを閉じる）
-            if (key === currentFetchingKey) {
-              window.history.replaceState({}, '', window.location.pathname);
-              setCurrentFetchingKey(null);
-            }
-            
-            // 3秒後にステータスをクリア
-            setTimeout(async () => {
-              try {
-                const [clientId, athleteId] = key.split(':');
-                await fetch(`/api/fetch-status?client_id=${clientId}&athlete_id=${athleteId}`, {
-                  method: 'DELETE',
-                });
-                // ステータスを再取得
-                const response = await fetch('/api/fetch-status');
-                const updatedData = await response.json();
-                setFetchStatuses(updatedData);
-              } catch (err) {
-                console.error('Failed to clear status:', err);
-              }
-            }, 3000);
-          }
-        });
-      } catch (err) {
-        console.error('Failed to fetch status:', err);
-      }
-    }, 3000);
-    
-    return () => clearInterval(interval);
-  }, [completedStatuses, currentFetchingKey]);
   
   const fetchTokens = async () => {
     try {
@@ -215,36 +134,35 @@ function HomeContent() {
       });
     }
   };
+  
+  const handleAuth = async () => {
+    setShowAuthForm(true);
+  };
 
-  const handleResetFetchStatus = async (clientId: string, athleteId: number, athleteName: string) => {
-    if (!confirm(`${athleteName} のデータ取得状態をリセットしますか？\nこれにより、スタックした取得処理をクリアできます。`)) {
+  const handleStartAuth = async () => {
+    if (!clientId || !clientSecret) {
+      alert('Client IDとClient Secretの両方を入力してください');
       return;
     }
-    
+
     try {
-      const response = await fetch('/api/reset-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ client_id: clientId, athlete_id: athleteId }),
-      });
+      const response = await fetch(`/api/auth?client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`);
+      const data = await response.json();
       
-      if (response.ok) {
-        alert('取得状態をリセットしました。再度データ取得を試してください。');
-        // ステータスを再読み込み
-        const statusResponse = await fetch('/api/fetch-status');
-        const statusData = await statusResponse.json();
-        setFetchStatuses(statusData);
-      } else {
-        alert('リセットに失敗しました');
+      if (data.error) {
+        alert(`エラー: ${data.error}`);
+        return;
+      }
+      
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
       }
     } catch (err) {
-      console.error('Failed to reset fetch status:', err);
-      alert('リセットに失敗しました');
+      console.error('Failed to start auth:', err);
+      alert('認証の開始に失敗しました');
     }
   };
-  
+
   const getErrorMessage = (errorCode: string | null) => {
     switch (errorCode) {
       case 'no_code':
@@ -253,6 +171,10 @@ function HomeContent() {
         return 'システムの設定に問題があります。管理者に「設定エラー」と伝えてください。';
       case 'token_error':
         return 'Stravaからのデータ取得に失敗しました。しばらく待ってから再度お試しください。';
+      case 'missing_client_info':
+        return 'Client情報が不足しています。もう一度最初からお試しください。';
+      case 'invalid_state':
+        return '認証情報が不正です。もう一度最初からお試しください。';
       default:
         return '予期しないエラーが発生しました。ページを再読み込みしてもう一度お試しください。';
     }
@@ -277,6 +199,13 @@ function HomeContent() {
             </div>
           </div>          {/* メインボタンエリア */}
           <div className="flex flex-col items-stretch sm:items-center gap-3 sm:gap-4">
+            <button
+              onClick={handleAuth}
+              className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              🔗 Stravaアカウントを登録する（API認証情報を入力）
+            </button>
+
             <a
               href="/stats"
               className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex items-center justify-center gap-2"
@@ -291,18 +220,9 @@ function HomeContent() {
               Strava設定ガイド
               <span className="text-sm">{showSetupGuide ? '▲' : '▼'}</span>
             </button>
-            
-            <button
-              onClick={() => setShowAuthForm(!showAuthForm)}
-              className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              Stravaアカウントを登録する
-              <span className="text-sm">{showAuthForm ? '▲' : '▼'}</span>
-            </button>
           
           </div>
         </div>
-
         {/* 認証情報入力フォーム */}
         {showAuthForm && (
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8 mb-6 sm:mb-8 border-2 sm:border-4 border-orange-400">
@@ -353,13 +273,7 @@ function HomeContent() {
               </div>
               
               <button
-                onClick={() => {
-                  if (!clientId || !clientSecret) {
-                    alert('Client IDとClient Secretの両方を入力してください');
-                    return;
-                  }
-                  window.location.href = `/api/auth?client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`;
-                }}
+                onClick={handleStartAuth}
                 disabled={!clientId || !clientSecret}
                 className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
@@ -410,7 +324,7 @@ function HomeContent() {
                         <li><strong>Category:</strong> Data Importer を選択</li>
                         <li><strong>Club:</strong> （空欄でOK）</li>
                         <li><strong>Website:</strong> http://localhost:3000 <br /> ※"test"とかテキトー文字でも問題ないです。 </li>
-                        <li><strong>Authorization Callback Domain:</strong> <code className="bg-gray-100 px-2 py-1 rounded">stravastas.vercel.app <br /> <span className="text-red-600 font-bold">※ここは必ず「stravastas.vercel.app」としてください！</span></code></li>
+                        <li><strong>Authorization Callback Domain:</strong> <code className="bg-gray-100 px-2 py-1 rounded">localhost <br /> <span className="text-red-600 font-bold">※ここは必ず「localhost」としてください！</span></code></li>
                       </ul>
                     </li>
                     <li>利用規約に同意して「Create」ボタンをクリック</li>
@@ -666,7 +580,6 @@ function HomeContent() {
                 const userStats = stats.find(s => s.client_id === token.client_id && s.athlete_id === token.athlete_id);
                 const key = `${token.client_id}:${token.athlete_id}`;
                 const isRefreshing = refreshingStats.has(key);
-                const fetchStatus = fetchStatuses[key];
                 
                 return (
                   <div
@@ -678,18 +591,18 @@ function HomeContent() {
                         {token.athlete_profile.profile && (
                           <img
                             src={token.athlete_profile.profile}
-                            alt={token.athlete_name}
+                            alt={`${token.athlete_profile.firstname} ${token.athlete_profile.lastname}`}
                             className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md"
                           />
                         )}
                         <div className="flex-1">
                           <h3 className="text-2xl font-bold text-gray-800 mb-1">
-                            {token.athlete_name}
+                            {token.athlete_profile.firstname} {token.athlete_profile.lastname}
                           </h3>
                           <div className="space-y-1">
                             
                             {/* 統計データ表示 */}
-                            {userStats && !fetchStatus && (
+                            {userStats && (
                               <div className="mt-3 space-y-3">
                                 {/* 全体サマリー */}
                                 <div className="bg-blue-50 p-3 rounded-lg">
@@ -742,89 +655,16 @@ function HomeContent() {
                               </div>
                             )}
                             
-                            {/* 取得中の表示 */}
-                            {fetchStatus?.status === 'fetching' && (
-                              <div className="mt-3 bg-blue-50 p-3 rounded-lg border-2 border-blue-200">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
-                                    <p className="text-xs font-semibold text-blue-800">
-                                      📊 データを取得中...
-                                    </p>
-                                  </div>
-                                  <button
-                                    onClick={() => handleResetFetchStatus(token.client_id, token.athlete_id, token.athlete_name)}
-                                    className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors"
-                                    title="スタックした場合にリセット"
-                                  >
-                                    リセット
-                                  </button>
-                                </div>
-                                {fetchStatus.progress && (
-                                  <div className="space-y-1">
-                                    <div className="flex justify-between text-xs text-blue-700">
-                                      <span>{fetchStatus.progress.current} / {fetchStatus.progress.total} アクティビティ</span>
-                                      <span>{Math.round((fetchStatus.progress.current / fetchStatus.progress.total) * 100)}%</span>
-                                    </div>
-                                    <div className="w-full bg-blue-200 rounded-full h-2">
-                                      <div 
-                                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                        style={{ width: `${(fetchStatus.progress.current / fetchStatus.progress.total) * 100}%` }}
-                                      ></div>
-                                    </div>
-                                  </div>
-                                )}
-                                <p className="text-xs text-blue-600 mt-2">
-                                  開始時刻: {new Date(fetchStatus.started_at).toLocaleString('ja-JP')}
-                                </p>
-                                <p className="text-xs text-blue-500 mt-1">
-                                  ※ 長時間変化がない場合は「リセット」ボタンを押してください
-                                </p>
-                              </div>
-                            )}
-                            
-                            {/* 完了表示 */}
-                            {fetchStatus?.status === 'completed' && (
-                              <div className="mt-3 bg-green-50 p-3 rounded-lg border border-green-200">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-lg">✅</span>
-                                  <div>
-                                    <p className="text-xs font-semibold text-green-800">
-                                      データ取得完了！
-                                    </p>
-                                    <p className="text-xs text-green-700">
-                                      統計情報を更新しています...
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* エラー表示 */}
-                            {fetchStatus?.status === 'error' && (
-                              <div className="mt-3 bg-red-50 p-3 rounded-lg border-2 border-red-200">
-                                <div className="flex items-center justify-between mb-1">
-                                  <p className="text-xs font-semibold text-red-800">❌ データ取得エラー</p>
-                                  <button
-                                    onClick={() => handleResetFetchStatus(token.client_id, token.athlete_id, token.athlete_name)}
-                                    className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded transition-colors"
-                                  >
-                                    リセットして再試行
-                                  </button>
-                                </div>
-                                <p className="text-xs text-red-700">{fetchStatus.error}</p>
-                              </div>
-                            )}
-                            
-                            {!userStats && !fetchStatus && !isRefreshing && (
+                            {!userStats && !isRefreshing && (
                               <div className="mt-3 bg-yellow-50 p-3 rounded-lg">
                                 <p className="text-xs text-yellow-800">
-                                  📊 統計データがまだ取得されていません
+                                  📊 統計データがまだ取得されていません<br />
+                                  管理者がローカル環境でデータ取得を実行する必要があります
                                 </p>
                               </div>
                             )}
                             
-                            {isRefreshing && !fetchStatus && (
+                            {isRefreshing && (
                               <div className="mt-3 bg-blue-50 p-3 rounded-lg flex items-center gap-2">
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
                                 <p className="text-xs text-blue-800">

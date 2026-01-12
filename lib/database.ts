@@ -13,15 +13,14 @@ export async function saveTokenToDB(token: StravaToken) {
     .from('tokens')
     .upsert({
       client_id: token.client_id,
-      athlete_id: token.athlete_id,
-      athlete_name: token.athlete_name,
       access_token: token.access_token,
       refresh_token: token.refresh_token,
       expires_at: token.expires_at,
+      client_secret: token.client_secret,
       created_at: token.created_at,
       athlete_profile: token.athlete_profile,
     }, {
-      onConflict: 'client_id,athlete_id'
+      onConflict: 'client_id'
     });
 
   if (error) {
@@ -46,12 +45,11 @@ export async function getTokensFromDB() {
 }
 
 // 特定のトークンを取得
-export async function getTokenByIdFromDB(clientId: string, athleteId: number) {
+export async function getTokenByIdFromDB(clientId: string) {
   const { data, error } = await supabase
     .from('tokens')
     .select('*')
     .eq('client_id', clientId)
-    .eq('athlete_id', athleteId)
     .single();
 
   if (error) {
@@ -63,12 +61,11 @@ export async function getTokenByIdFromDB(clientId: string, athleteId: number) {
 }
 
 // トークンを削除
-export async function deleteTokenFromDB(clientId: string, athleteId: number) {
+export async function deleteTokenFromDB(clientId: string) {
   const { error } = await supabase
     .from('tokens')
     .delete()
-    .eq('client_id', clientId)
-    .eq('athlete_id', athleteId);
+    .eq('client_id', clientId);
 
   if (error) {
     console.error('Error deleting token:', error);
@@ -140,12 +137,11 @@ export async function getStatsByIdFromDB(clientId: string, athleteId: number) {
 }
 
 // 統計を削除
-export async function deleteStatsFromDB(clientId: string, athleteId: number) {
+export async function deleteStatsFromDB(clientId: string) {
   const { error } = await supabase
     .from('stats')
     .delete()
-    .eq('client_id', clientId)
-    .eq('athlete_id', athleteId);
+    .eq('client_id', clientId);
 
   if (error) {
     console.error('Error deleting stats:', error);
@@ -245,12 +241,11 @@ export async function getFetchStatusFromDB(clientId?: string, athleteId?: number
 }
 
 // データ取得状況を削除
-export async function deleteFetchStatusFromDB(clientId: string, athleteId: number) {
+export async function deleteFetchStatusFromDB(clientId: string) {
   const { error } = await supabase
     .from('fetch_status')
     .delete()
-    .eq('client_id', clientId)
-    .eq('athlete_id', athleteId);
+    .eq('client_id', clientId);
 
   if (error) {
     console.error('Error deleting fetch status:', error);

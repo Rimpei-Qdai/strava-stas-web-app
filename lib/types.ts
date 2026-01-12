@@ -1,10 +1,9 @@
 export interface StravaToken {
   client_id: string;
-  athlete_id: number;
-  athlete_name: string;
   access_token: string;
   refresh_token: string;
   expires_at: number;
+  client_secret?: string;
   created_at: string;
   athlete_profile: {
     id: number;

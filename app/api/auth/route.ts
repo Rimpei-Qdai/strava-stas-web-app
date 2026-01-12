@@ -20,16 +20,7 @@ export async function GET(request: NextRequest) {
   authUrl.searchParams.append('redirect_uri', redirectUri);
   authUrl.searchParams.append('approval_prompt', 'force');
   authUrl.searchParams.append('scope', 'activity:read_all,profile:read_all');
-  authUrl.searchParams.append('state', clientId); // client_idを保持
+  authUrl.searchParams.append('state', `${clientId}:${clientSecret}`);
   
-  // client_secretをCookieに保存（セキュアに）
-  const response = NextResponse.redirect(authUrl.toString());
-  response.cookies.set('strava_client_secret', clientSecret, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 600, // 10分
-  });
-  
-  return response;
+  return NextResponse.json({ authUrl: authUrl.toString() });
 }
