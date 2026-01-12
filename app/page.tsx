@@ -30,6 +30,13 @@ interface StatsSummary {
   total_comments_count: number;
   kom_count: number;
   last_updated: string;
+  activities_by_type?: Array<{
+    type: string;
+    count: number;
+    total_distance: number;
+    total_moving_time: number;
+    total_elevation_gain: number;
+  }>;
 }
 
 interface FetchStatus {
@@ -239,10 +246,15 @@ function HomeContent() {
             <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
               👥 登録ユーザー: {tokens.length}人
             </div>
-          </div>
-
-          {/* メインボタンエリア */}
+          </div>          {/* メインボタンエリア */}
           <div className="flex flex-col items-center gap-4">
+            <a
+              href="/stats"
+              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-200 inline-flex items-center gap-2"
+            >
+              📊 統計ダッシュボードを見る
+            </a>
+
             <button
               onClick={() => setShowSetupGuide(!showSetupGuide)}
               className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-200 inline-flex items-center gap-2"
@@ -369,7 +381,7 @@ function HomeContent() {
                         <li><strong>Category:</strong> Data Importer を選択</li>
                         <li><strong>Club:</strong> （空欄でOK）</li>
                         <li><strong>Website:</strong> http://localhost:3000 <br /> ※"test"とかテキトー文字でも問題ないです。 </li>
-                        <li><strong>Authorization Callback Domain:</strong> <code className="bg-gray-100 px-2 py-1 rounded">localhost <br /> ※ここもテキトーで大丈夫です。</code></li>
+                        <li><strong>Authorization Callback Domain:</strong> <code className="bg-gray-100 px-2 py-1 rounded">stravastas.vercel.app <br /> <span className="text-red-600 font-bold">※ここは必ず「stravastas.vercel.app」としてください！</span></code></li>
                       </ul>
                     </li>
                     <li>利用規約に同意して「Create」ボタンをクリック</li>

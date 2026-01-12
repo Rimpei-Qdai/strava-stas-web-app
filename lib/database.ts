@@ -177,17 +177,49 @@ export async function saveFetchStatusToDB(clientId: string, athleteId: number, s
 
 // データ取得状況を取得
 export async function getFetchStatusFromDB(clientId?: string, athleteId?: number) {
-  let query = supabase.from('fetch_status').select('*');
-  
   if (clientId && athleteId) {
-    query = query.eq('client_id', clientId).eq('athlete_id', athleteId).single();
+    const { data, error } = await supabase
+      .from('fetch_status')
+      .select('*')
+      .eq('client_id', clientId)
+      .eq('athlete_id', athleteId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching status:', error);
+      throw error;
+    }
+
+    return data;
   } else if (clientId) {
-    query = query.eq('client_id', clientId);
+    const { data, error } = await supabase
+      .from('fetch_status')
+      .select('*')
+      .eq('client_id', clientId);
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching status:', error);
+      throw error;
+    }
+
+    return data;
   } else if (athleteId) {
-    query = query.eq('athlete_id', athleteId);
+    const { data, error } = await supabase
+      .from('fetch_status')
+      .select('*')
+      .eq('athlete_id', athleteId);
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching status:', error);
+      throw error;
+    }
+
+    return data;
   }
 
-  const { data, error } = await query;
+  const { data, error } = await supabase
+    .from('fetch_status')
+    .select('*');
 
   if (error && error.code !== 'PGRST116') {
     console.error('Error fetching status:', error);
