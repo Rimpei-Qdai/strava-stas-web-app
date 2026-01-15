@@ -19,13 +19,16 @@ interface Token {
 }
 
 interface StatsSummary {
-  filename: string;
+  filename?: string;
   client_id: string;
+  athlete_id: number;
+  athlete_name: string;
   period: string;
   total_distance: number;
   total_activities: number;
   total_comments_count: number;
   kom_count: number;
+  local_legend_count?: number;
   last_updated: string;
   activities_by_type?: Array<{
     type: string;
@@ -45,7 +48,7 @@ function HomeContent() {
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
-  const [refreshingStats, setRefreshingStats] = useState<Set<string>>(new Set());
+  const [copied, setCopied] = useState(false);
   const searchParams = useSearchParams();
   
   const success = searchParams.get('success');
@@ -56,6 +59,36 @@ function HomeContent() {
     fetchTokens();
     fetchStats();
   }, []);
+
+  const copyToClipboard = async (text: string) => {
+    // モダンなClipboard APIを試す
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      } catch (err) {
+        console.error('Clipboard APIでコピー失敗:', err);
+      }
+    }
+    
+    // フォールバック: 古い方法でコピー
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error('フォールバックコピーも失敗:', e);
+    }
+  };
   
   const fetchTokens = async () => {
     try {
@@ -100,38 +133,6 @@ function HomeContent() {
     } catch (err) {
       console.error('Failed to delete token:', err);
       alert('トークンの削除に失敗しました');
-    }
-  };
-  
-  const handleRefreshStats = async (clientId: string, athleteId: number) => {
-    const key = `${clientId}:${athleteId}`;
-    setRefreshingStats(prev => new Set(prev).add(key));
-    
-    try {
-      const response = await fetch('/api/stats', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ client_id: clientId, athlete_id: athleteId }),
-      });
-      
-      if (response.ok) {
-        // ポーリングが自動的に進捗を表示するので、すぐにrefreshingStatsから削除
-        setRefreshingStats(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(key);
-          return newSet;
-        });
-      }
-    } catch (err) {
-      console.error('Failed to refresh stats:', err);
-      alert('データ取得の開始に失敗しました');
-      setRefreshingStats(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(key);
-        return newSet;
-      });
     }
   };
   
@@ -186,10 +187,10 @@ function HomeContent() {
         {/* ヘッダー */}
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-8 mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold text-gray-800 mb-2 sm:mb-3 text-center">
-            🚴 Strava データ取得
+            🚴 Strava トークン管理
           </h1>
           <p className="text-gray-600 text-center mb-4 sm:mb-6 text-sm sm:text-lg">
-            下記の設定ガイドを読んで、データ取得をお願いします🙇
+            Stravaの認証情報を登録して、Pythonスクリプトでデータを取得できるようにします
           </p>
           
           {/* ステータスバッジ */}
@@ -324,7 +325,20 @@ function HomeContent() {
                         <li><strong>Category:</strong> Data Importer を選択</li>
                         <li><strong>Club:</strong> （空欄でOK）</li>
                         <li><strong>Website:</strong> http://localhost:3000 <br /> ※"test"とかテキトー文字でも問題ないです。 </li>
-                        <li><strong>Authorization Callback Domain:</strong> <code className="bg-gray-100 px-2 py-1 rounded">localhost <br /> <span className="text-red-600 font-bold">※ここは必ず「localhost」としてください！</span></code></li>
+                        <li><strong>Authorization Callback Domain:</strong> 
+                          <div className="inline-flex items-center gap-2 bg-gray-100 px-2 py-1 rounded">
+                            <code id="callbackDomain">stravastas.vercel.app</code>
+                            <button
+                              onClick={() => copyToClipboard('stravastas.vercel.app')}
+                              className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded transition-colors"
+                              title="クリップボードにコピー"
+                            >
+                              {copied ? '✓' : 'copy'}
+                            </button>
+                          </div>
+                          <br />
+                          <span className="text-red-600 font-bold">※ここは必ず「stravastas.vercel.app」としてください！</span>
+                        </li>
                       </ul>
                     </li>
                     <li>利用規約に同意して「Create」ボタンをクリック</li>
@@ -516,16 +530,8 @@ function HomeContent() {
             <p className="text-lg mb-2">
               {decodeURIComponent(athleteName)} さんの登録が完了しました
             </p>
-                <p className="text-sm">
-                  2025年のアクティビティデータを取得しています。
-                </p>
-              <p className="text-xs text-green-700 mt-2">
-                完了まで数分かかる場合があります。ページを閉じずに完了までお待ちください。
-                ご自身のアイコンの横に年間走行距離が表示されれば完了です！
-              </p>
             <p className="text-sm mt-2">
-              下の「認証済みユーザー」リストに追加されました。
-              データ取得の進捗を下記で確認できます！
+              トークンが正常に保存されました。Pythonスクリプトを実行してデータを取得してください。
             </p>
           </div>
         )}
@@ -577,13 +583,11 @@ function HomeContent() {
               {tokens.map((token) => {
                 const isExpired = Date.now() / 1000 >= token.expires_at;
                 const expiresDate = new Date(token.expires_at * 1000);
-                const userStats = stats.find(s => s.client_id === token.client_id && s.athlete_id === token.athlete_id);
-                const key = `${token.client_id}:${token.athlete_id}`;
-                const isRefreshing = refreshingStats.has(key);
+                const userStats = stats.find(s => s.client_id === token.client_id && s.athlete_id === token.athlete_profile.id);
                 
                 return (
                   <div
-                    key={key}
+                    key={`${token.client_id}:${token.athlete_profile.id}`}
                     className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 hover:shadow-lg transition-all duration-200 border-2 border-gray-200"
                   >
                     <div className="flex items-start justify-between flex-wrap gap-4">
@@ -600,6 +604,23 @@ function HomeContent() {
                             {token.athlete_profile.firstname} {token.athlete_profile.lastname}
                           </h3>
                           <div className="space-y-1">
+                            <p className="text-sm text-gray-600">
+                              🆔 Athlete ID: {token.athlete_profile.id}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              📍 {token.athlete_profile.city && token.athlete_profile.state 
+                                ? `${token.athlete_profile.city}, ${token.athlete_profile.state}`
+                                : token.athlete_profile.country || '場所未設定'}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              🔑 Client ID: {token.client_id}
+                            </p>
+                            <p className={`text-sm font-semibold ${isExpired ? 'text-red-600' : 'text-green-600'}`}>
+                              {isExpired ? '⚠️ トークン期限切れ' : '✅ トークン有効'}
+                              <span className="text-gray-500 font-normal text-xs ml-2">
+                                (期限: {expiresDate.toLocaleString('ja-JP')})
+                              </span>
+                            </p>
                             
                             {/* 統計データ表示 */}
                             {userStats && (
@@ -655,25 +676,25 @@ function HomeContent() {
                               </div>
                             )}
                             
-                            {!userStats && !isRefreshing && (
+                            {!userStats && (
                               <div className="mt-3 bg-yellow-50 p-3 rounded-lg">
                                 <p className="text-xs text-yellow-800">
                                   📊 統計データがまだ取得されていません<br />
-                                  管理者がローカル環境でデータ取得を実行する必要があります
-                                </p>
-                              </div>
-                            )}
-                            
-                            {isRefreshing && (
-                              <div className="mt-3 bg-blue-50 p-3 rounded-lg flex items-center gap-2">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
-                                <p className="text-xs text-blue-800">
-                                  データを取得中...
+                                  Pythonスクリプト (scripts/fetch_user_data.py) を実行してデータを取得してください
                                 </p>
                               </div>
                             )}
                           </div>
                         </div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => handleDelete(token.client_id, token.athlete_profile.id, `${token.athlete_profile.firstname} ${token.athlete_profile.lastname}`)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors duration-200"
+                        >
+                          🗑️ 削除
+                        </button>
                       </div>
                     </div>
                   </div>

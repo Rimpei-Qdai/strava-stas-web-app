@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
     const tokenData: TokenResponse = await tokenResponse.json();
     
     // トークン情報を保存（client_secretも含む）
+    const athleteName = `${tokenData.athlete.firstname} ${tokenData.athlete.lastname}`.trim();
     const token: StravaToken = {
       client_id: clientId,
       access_token: tokenData.access_token,
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
     
     // Cookieをクリア（使用済み）
     const response = NextResponse.redirect(
-      new URL(`/?success=true&athlete=${encodeURIComponent(token.athlete_name)}`, request.url)
+      new URL(`/?success=true&athlete=${encodeURIComponent(athleteName)}`, request.url)
     );
     response.cookies.delete('strava_client_secret');
     

@@ -64,6 +64,16 @@ def get_token_from_db(client_id: str):
         return None
 
 
+def check_stats_exist(client_id: str):
+    """指定したclient_idのstatsがデータベースに存在するかチェック"""
+    try:
+        response = supabase.table('stats').select('client_id').eq('client_id', client_id).execute()
+        return response.data and len(response.data) > 0
+    except Exception as e:
+        print(f"stats確認エラー: {e}")
+        return False
+
+
 def refresh_access_token(client_id: str, client_secret: str, refresh_token: str):
     """アクセストークンをリフレッシュ"""
     try:
@@ -246,6 +256,18 @@ def process_activities(activities, access_token: str):
                 })
                 stats['total_comments_count'] += 1
     
+    # activities_by_typeを辞書から配列に変換
+    stats['activities_by_type'] = [
+        {
+            'type': type_name,
+            'count': type_data['count'],
+            'total_distance': type_data['total_distance'],
+            'total_moving_time': type_data['total_moving_time'],
+            'total_elevation_gain': type_data['total_elevation_gain']
+        }
+        for type_name, type_data in stats['activities_by_type'].items()
+    ]
+    
     return stats
 
 
@@ -275,6 +297,11 @@ def process_user(token_data: dict):
     print(f"👤 処理中: {athlete_name} (ID: {athlete_id})")
     print(f"   Client ID: {client_id}")
     print(f"{'='*60}")
+    
+    # statsテーブルに既にデータがあるかチェック
+    if check_stats_exist(client_id):
+        print("✅ このユーザーのstatsは既に存在します - スキップします")
+        return 'skipped'
     
     # Client Secretの確認
     client_secret = token_data.get('client_secret')
@@ -324,6 +351,33 @@ def process_user(token_data: dict):
     # 統計処理
     stats = process_activities(activities, access_token)
     
+    # athlete情報を追加
+    stats['athlete_id'] = athlete_id
+    stats['athlete_name'] = athlete_name
+    stats['period'] = f"{start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}"
+    stats['last_updated'] = datetime.now(timezone.utc).isoformat()
+    
+    # セグメント統計を追加
+    segment_counts = {}
+    for seg in stats['segments_passed']:
+        seg_id = seg['segment_id']
+        if seg_id not in segment_counts:
+            segment_counts[seg_id] = {
+                'segment_id': seg_id,
+                'segment_name': seg['segment_name'],
+                'pass_count': 0
+            }
+        segment_counts[seg_id]['pass_count'] += 1
+    
+    stats['most_passed_segments'] = sorted(
+        segment_counts.values(),
+        key=lambda x: x['pass_count'],
+        reverse=True
+    )[:10]  # 上位10個
+    
+    # Local Legend数を追加（現時点では0、将来の拡張用）
+    stats['local_legend_count'] = 0
+    
     # 結果表示
     print(f"\n📊 統計サマリー:")
     print(f"   総距離: {stats['total_distance'] / 1000:.1f} km")
@@ -356,14 +410,17 @@ def main():
     # 各ユーザーを処理
     success_count = 0
     skip_count = 0
+    already_exists_count = 0
     error_count = 0
     
     for i, token_data in enumerate(all_tokens, 1):
         print(f"\n[{i}/{len(all_tokens)}]")
         try:
             result = process_user(token_data)
-            if result:
+            if result == True:
                 success_count += 1
+            elif result == 'skipped':
+                already_exists_count += 1
             else:
                 skip_count += 1
         except Exception as e:
@@ -375,6 +432,7 @@ def main():
     print("🎉 全ての処理が完了しました！")
     print(f"{'='*60}")
     print(f"✅ 成功: {success_count} 人")
+    print(f"📊 データ既存: {already_exists_count} 人")
     print(f"⚠️  スキップ: {skip_count} 人")
     print(f"❌ エラー: {error_count} 人")
     print(f"{'='*60}\n")

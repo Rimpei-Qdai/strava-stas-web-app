@@ -84,7 +84,7 @@ export default function StatsPage() {
   };
 
   const calculateCommentsGiven = (stat: StatsSummary) => {
-    if (!stat.comments) return 0;
+    if (!stat.comments || !Array.isArray(stat.comments)) return 0;
     return stat.comments.filter(c => c.commenter_id === stat.athlete_id).length;
   };
 
@@ -172,9 +172,11 @@ export default function StatsPage() {
   // アクティビティタイプ別集計
   const activityTypes = new Set<string>();
   stats.forEach(stat => {
-    stat.activities_by_type?.forEach(type => {
-      activityTypes.add(type.type);
-    });
+    if (Array.isArray(stat.activities_by_type)) {
+      stat.activities_by_type.forEach(type => {
+        activityTypes.add(type.type);
+      });
+    }
   });
 
   const activityTypeChartData = {
@@ -182,7 +184,9 @@ export default function StatsPage() {
     datasets: stats.map((stat, index) => ({
       label: stat.athlete_name,
       data: Array.from(activityTypes).map(type => {
-        const typeData = stat.activities_by_type?.find(t => t.type === type);
+        const typeData = Array.isArray(stat.activities_by_type) 
+          ? stat.activities_by_type.find(t => t.type === type)
+          : undefined;
         return typeData ? (typeData.total_distance / 1000).toFixed(1) : 0;
       }),
       backgroundColor: colors[index % colors.length],
@@ -285,9 +289,18 @@ export default function StatsPage() {
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-6 sm:p-12 text-center">
             <div className="text-4xl sm:text-6xl mb-4">📊</div>
             <p className="text-gray-800 text-lg sm:text-xl font-bold mb-2">統計データがありません</p>
-            <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
-              先にホームページでStravaアカウントを登録してデータを取得してください
+            <p className="text-gray-600 mb-4 text-sm sm:text-base">
+              トークンを登録した後、Pythonスクリプトを実行してデータを取得してください
             </p>
+            <div className="bg-blue-50 p-4 rounded-lg mb-6 text-left max-w-md mx-auto">
+              <p className="font-semibold text-blue-800 mb-2 text-sm">📝 データ取得手順：</p>
+              <ol className="list-decimal list-inside text-blue-700 space-y-1 text-xs sm:text-sm">
+                <li>ホームページでStravaアカウントを登録</li>
+                <li>ターミナルで <code className="bg-blue-100 px-2 py-1 rounded">cd scripts</code></li>
+                <li><code className="bg-blue-100 px-2 py-1 rounded">python fetch_user_data.py</code> を実行</li>
+                <li>このページをリロード</li>
+              </ol>
+            </div>
             <Link
               href="/"
               className="inline-block bg-blue-500 hover:bg-blue-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-semibold transition-all duration-200 text-sm sm:text-base"

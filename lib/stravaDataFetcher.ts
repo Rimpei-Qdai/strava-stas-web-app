@@ -84,14 +84,15 @@ export async function fetchStravaData(
     ? Math.floor(endDate.getTime() / 1000)
     : Math.floor(new Date('2025-12-31T23:59:59Z').getTime() / 1000); // 2025年末まで
 
+  const athleteName = `${token.athlete_profile.firstname} ${token.athlete_profile.lastname}`.trim();
   console.log(
-    `📊 ${token.athlete_name} のデータを取得中... (${new Date(afterTimestamp * 1000).toLocaleDateString()} - ${new Date(beforeTimestamp * 1000).toLocaleDateString()})`
+    `📊 ${athleteName} のデータを取得中... (${new Date(afterTimestamp * 1000).toLocaleDateString()} - ${new Date(beforeTimestamp * 1000).toLocaleDateString()})`
   );
   console.log(`   after: ${afterTimestamp}, before: ${beforeTimestamp}`);
 
   const stats: UserStats = {
-    athlete_id: token.athlete_id,
-    athlete_name: token.athlete_name,
+    athlete_id: token.athlete_profile.id,
+    athlete_name: athleteName,
     period: `${new Date(afterTimestamp * 1000).toISOString().split('T')[0]} to ${new Date(beforeTimestamp * 1000).toISOString().split('T')[0]}`,
     total_distance: 0,
     total_activities: 0,
@@ -325,7 +326,7 @@ export async function fetchStravaData(
 
   stats.activities_by_type = Object.values(typeStats).sort((a, b) => b.count - a.count);
 
-  console.log(`✅ データ取得完了: ${token.athlete_name}`);
+  console.log(`✅ データ取得完了: ${athleteName}`);
   console.log(`   距離: ${(stats.total_distance / 1000).toFixed(2)} km`);
   console.log(`   アクティビティ: ${stats.total_activities}`);
   console.log(`   コメント: ${stats.total_comments_count}`);

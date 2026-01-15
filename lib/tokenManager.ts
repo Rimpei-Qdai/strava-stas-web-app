@@ -15,7 +15,8 @@ export function ensureDataDir() {
 export function saveToken(token: StravaToken): string {
   ensureDataDir();
   
-  const filename = `${token.athlete_id}_${token.athlete_name.replace(/\s+/g, '_')}.json`;
+  const athleteName = `${token.athlete_profile.firstname} ${token.athlete_profile.lastname}`.trim();
+  const filename = `${token.athlete_profile.id}_${athleteName.replace(/\s+/g, '_')}.json`;
   const filepath = path.join(DATA_DIR, filename);
   
   fs.writeFileSync(filepath, JSON.stringify(token, null, 2));

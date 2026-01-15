@@ -74,16 +74,15 @@ export async function deleteTokenFromDB(clientId: string) {
 }
 
 // 統計を保存
-export async function saveStatsToDB(clientId: string, athleteId: number, stats: any) {
+export async function saveStatsToDB(clientId: string, stats: any) {
   const { error } = await supabase
     .from('stats')
     .upsert({
       client_id: clientId,
-      athlete_id: athleteId,
       data: stats,
       updated_at: new Date().toISOString(),
     }, {
-      onConflict: 'client_id,athlete_id'
+      onConflict: 'client_id'
     });
 
   if (error) {
@@ -106,19 +105,17 @@ export async function getStatsFromDB() {
 
   return data?.map(row => ({
     client_id: row.client_id,
-    athlete_id: row.athlete_id,
     ...row.data,
     last_updated: row.updated_at,
   })) || [];
 }
 
 // 特定の統計を取得
-export async function getStatsByIdFromDB(clientId: string, athleteId: number) {
+export async function getStatsByIdFromDB(clientId: string) {
   const { data, error } = await supabase
     .from('stats')
     .select('*')
     .eq('client_id', clientId)
-    .eq('athlete_id', athleteId)
     .single();
 
   if (error && error.code !== 'PGRST116') { // PGRST116 = not found
@@ -130,7 +127,6 @@ export async function getStatsByIdFromDB(clientId: string, athleteId: number) {
 
   return {
     client_id: data.client_id,
-    athlete_id: data.athlete_id,
     ...data.data,
     last_updated: data.updated_at,
   };

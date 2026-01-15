@@ -1,68 +1,82 @@
-# 🚴 Strava Token Web App
+# 🚴 Strava Stats Web App
 
-複数ユーザーのStravaトークンを取得・管理するWebアプリケーション（Next.js + TypeScript）
+複数ユーザーのStravaトークンを取得・管理し、Pythonスクリプトでデータを取得・可視化するWebアプリケーション（Next.js + TypeScript + Python）
 
 ## 🌟 機能
 
+### TypeScript (Next.js) 側
 - Strava OAuth認証フロー
-- 複数ユーザーのトークン管理
-- トークンの自動保存（JSON形式）
+- 複数ユーザーのトークン管理（アクセストークン、リフレッシュトークン）
 - トークンの有効期限表示
 - トークンの削除機能
-- Vercelでの簡単デプロイ
+- Supabaseへのトークン保存
+- 統計データの可視化（グラフ表示）
+
+### Python側
+- Strava APIからのアクティビティデータ取得
+- 統計情報の計算と集計
+- Supabaseへのデータ保存
+
+## 🔄 ワークフロー
+
+1. **Webアプリでトークン取得**: ユーザーがWebアプリでOAuth認証を実行し、トークンをSupabaseに保存
+2. **Pythonスクリプトでデータ取得**: ローカル環境でPythonスクリプトを実行し、Stravaからデータを取得してSupabaseに保存
+3. **Webアプリで可視化**: Webアプリで保存された統計データを可視化して表示
 
 ## 📁 プロジェクト構成
 
 ```
-get_tokens_web_app/
+strava-stats-web-app/
 ├── app/
 │   ├── api/
 │   │   ├── auth/route.ts        # OAuth認証開始
 │   │   ├── callback/route.ts    # OAuth コールバック
-│   │   └── tokens/route.ts      # トークン管理API
-│   ├── page.tsx                 # メインページ
+│   │   ├── tokens/route.ts      # トークン管理API
+│   │   └── stats/route.ts       # 統計データ取得API
+│   ├── stats/page.tsx           # 統計ダッシュボード
+│   ├── page.tsx                 # メインページ（トークン管理）
 │   └── layout.tsx               # レイアウト
 ├── lib/
 │   ├── types.ts                 # TypeScript型定義
-│   └── tokenManager.ts          # トークン管理ロジック
-├── data/
-│   └── tokens/                  # トークン保存先
-├── .env.local                   # 環境変数（ローカル）
-├── .env.local.example           # 環境変数テンプレート
-└── vercel.json                  # Vercel設定
+│   ├── database.ts              # Supabaseデータベース操作
+│   ├── tokenManager.ts          # トークン管理ロジック
+│   └── stravaDataFetcher.ts     # Stravaデータ取得（未使用）
+├── scripts/
+│   └── fetch_user_data.py       # データ取得Pythonスクリプト
+├── schema.sql                   # データベーススキーマ
+└── .env.local                   # 環境変数
 ```
 
-## 🚀 ローカル開発
+## 🚀 セットアップ
 
 ### 1. 依存関係のインストール
 
 ```bash
-cd get_tokens_web_app
+# Node.js依存関係
 npm install
+
+# Python依存関係
+pip install -r requirements.txt  # または pipenv install
 ```
 
-### 2. 環境変数の設定
+### 2. Supabaseのセットアップ
 
-`.env.local.example` をコピーして `.env.local` を作成：
+1. [Supabase](https://supabase.com)でプロジェクトを作成
+2. `schema.sql` をSupabase SQL Editorで実行してテーブルを作成
+3. プロジェクトのURLと匿名キーを取得
 
-```bash
-cp .env.local.example .env.local
-```
+### 3. 環境変数の設定
 
-`.env.local` を編集：
+`.env.local` を作成：
 
 ```env
-STRAVA_CLIENT_ID=your_client_id_here
-STRAVA_CLIENT_SECRET=your_client_secret_here
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Next.js
 NEXT_PUBLIC_REDIRECT_URI=http://localhost:3000/api/callback
 ```
-
-### 3. Strava API設定
-
-https://www.strava.com/settings/api にアクセスして：
-
-- **Authorization Callback Domain** に `localhost` を追加（開発用）
-- 本番デプロイ後は `your-app.vercel.app` も追加
 
 ### 4. 開発サーバー起動
 
@@ -72,71 +86,56 @@ npm run dev
 
 http://localhost:3000 にアクセス
 
+## 📝 使い方
+
+### ステップ1: トークンの取得（Webアプリ）
+
+1. Webアプリ (http://localhost:3000) にアクセス
+2. 「Stravaアカウントを登録する」ボタンをクリック
+3. Client IDとClient Secretを入力（各ユーザーが個別に持つ）
+4. Stravaで認証を完了
+5. トークンが自動的にSupabaseに保存される
+
+### ステップ2: データの取得（Pythonスクリプト）
+
+```bash
+cd scripts
+python fetch_user_data.py
+```
+
+このスクリプトは：
+- Supabaseから全トークンを取得
+- 各ユーザーのStravaデータを取得
+- 統計情報を計算
+- 結果をSupabaseに保存
+
+### ステップ3: データの可視化（Webアプリ）
+
+1. Webアプリで「統計ダッシュボードを見る」をクリック
+2. グラフやチャートで各ユーザーのデータを比較表示
+
 ## 🌐 Vercelへのデプロイ
 
+### トークンの取得
 ### 1. Vercel CLIでデプロイ
 
 ```bash
 npm install -g vercel
-cd get_tokens_web_app
 vercel
 ```
 
 ### 2. 環境変数の設定
 
-Vercelダッシュボードで以下の環境変数を設定：
+Vercelダッシュボードで環境変数を設定：
 
-- `STRAVA_CLIENT_ID`: あなたのStravaクライアントID
-- `STRAVA_CLIENT_SECRET`: あなたのStravaクライアントシークレット
+- `NEXT_PUBLIC_SUPABASE_URL`: SupabaseプロジェクトURL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase匿名キー
 - `NEXT_PUBLIC_REDIRECT_URI`: `https://your-app.vercel.app/api/callback`
 
-### 3. Strava APIの更新
-
-https://www.strava.com/settings/api で：
-
-- **Authorization Callback Domain** に `your-app.vercel.app` を追加
-
-### 4. 再デプロイ
+### 3. 本番デプロイ
 
 ```bash
 vercel --prod
-```
-
-## 📝 使い方
-
-### トークンの取得
-
-1. アプリにアクセス
-2. 「Stravaで認証する」ボタンをクリック
-3. Stravaアカウントでログイン
-4. アプリを承認
-5. 自動的にトークンが保存される
-
-### 複数ユーザーの追加
-
-- 各ユーザーが同じフローで認証
-- トークンは個別に保存される
-- ファイル名: `{athlete_id}_{athlete_name}.json`
-
-### トークンの利用
-
-保存されたトークンは `data/tokens/` ディレクトリに保存されます：
-
-```json
-{
-  "athlete_id": 12345678,
-  "athlete_name": "Taro Yamada",
-  "access_token": "xxxxx",
-  "refresh_token": "xxxxx",
-  "expires_at": 1234567890,
-  "created_at": "2025-12-31T12:00:00.000Z",
-  "athlete_profile": {
-    "id": 12345678,
-    "firstname": "Taro",
-    "lastname": "Yamada",
-    ...
-  }
-}
 ```
 
 ## 🔧 API エンドポイント
@@ -147,87 +146,49 @@ vercel --prod
 | `/api/callback` | GET | OAuth コールバック |
 | `/api/tokens` | GET | 全トークン一覧取得 |
 | `/api/tokens` | DELETE | トークン削除 |
+| `/api/stats` | GET | 統計データ取得 |
 
-## 📊 他のスクリプトからトークンを使用
+## 🐍 Pythonスクリプトの詳細
 
-```typescript
-import fs from 'fs';
-import path from 'path';
+### fetch_user_data.py
 
-// トークンを読み込む
-const tokensDir = path.join(process.cwd(), 'get_tokens_web_app', 'data', 'tokens');
-const files = fs.readdirSync(tokensDir);
+Supabaseに保存されたトークンを使用して、Stravaからデータを取得します。
 
-for (const file of files) {
-  if (file.endsWith('.json')) {
-    const tokenData = JSON.parse(
-      fs.readFileSync(path.join(tokensDir, file), 'utf-8')
-    );
-    
-    // Strava APIを使用
-    const response = await fetch('https://www.strava.com/api/v3/athlete/activities', {
-      headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`
-      }
-    });
-    
-    const activities = await response.json();
-    console.log(`${tokenData.athlete_name}:`, activities.length, 'activities');
-  }
-}
+**主な機能：**
+- トークンの自動リフレッシュ
+- 2025年のアクティビティデータ取得
+- コメント、セグメント、KOM情報の取得
+- 統計情報の自動計算
+- Supabaseへの保存
+
+**実行方法：**
+```bash
+cd scripts
+python fetch_user_data.py
+```
+
+**環境変数（.env または環境変数として設定）：**
+```
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_anon_key
 ```
 
 ## 🔒 セキュリティ
 
+- トークンはSupabaseに暗号化して保存
 - `.env.local` は `.gitignore` に追加済み
-- `data/tokens/` ディレクトリも `.gitignore` に追加済み
-- トークンは外部に公開しないでください
-- 本番環境では必ずHTTPSを使用してください
-
-## ⚠️ 注意事項
-
-### Vercelでのファイルシステム
-
-Vercelは読み取り専用のファイルシステムを使用するため、`data/tokens/` ディレクトリへのファイル書き込みは**本番環境では動作しません**。
-
-**解決策：**
-
-1. **データベースを使用**（推奨）
-   - Vercel Postgres
-   - MongoDB Atlas
-   - Supabase
-   
-2. **Vercel KVストアを使用**
-   ```bash
-   npm install @vercel/kv
-   ```
-
-3. **外部ストレージを使用**
-   - AWS S3
-   - Google Cloud Storage
-
-本番環境では、`lib/tokenManager.ts` を修正してデータベースまたはKVストアを使用してください。
-
-## 🛠️ トラブルシューティング
-
-### "Authorization Error"
-- Strava APIの設定でコールバックURLが正しく設定されているか確認
-
-### "config_error"
-- `.env.local` ファイルが正しく設定されているか確認
-- Vercelの環境変数が設定されているか確認
-
-### トークンが保存されない
-- `data/tokens/` ディレクトリの書き込み権限を確認
-- Vercelデプロイの場合は、データベースまたはKVストアの使用を検討
+- Client SecretはOAuth認証時のみ使用
+- 本番環境では必ずHTTPSを使用
 
 ## 📚 技術スタック
 
-- **Framework**: Next.js 15
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
+- **Frontend**: Next.js 16, React 19, TypeScript
+- **Styling**: Tailwind CSS 4
+- **Charts**: Chart.js, react-chartjs-2
+- **Database**: Supabase (PostgreSQL)
+- **Data Fetching**: Python 3.x
 - **Deployment**: Vercel
-- **API**: Strava OAuth2
+- **API**: Strava OAuth2 & REST API
 
 ## 📄 ライセンス
 
